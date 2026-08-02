@@ -1,0 +1,1636 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>جدول تناوبی عناصر | Periodic Table</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 120'><rect width='120' height='120' rx='24' fill='%230a0e17'/><g fill='%23d4a054'><rect x='45' y='96' width='30' height='18' rx='8'/><rect x='30' y='68' width='60' height='34' rx='16'/><rect x='14' y='60' width='16' height='34' rx='7' transform='rotate(-35 22 77)'/><rect x='34' y='34' width='13' height='42' rx='6' transform='rotate(-14 40 55)'/><rect x='50' y='24' width='13' height='50' rx='6' transform='rotate(-4 56 49)'/><rect x='66' y='26' width='13' height='48' rx='6' transform='rotate(6 72 50)'/><rect x='81' y='36' width='13' height='40' rx='6' transform='rotate(16 87 56)'/></g><rect x='42' y='38' width='36' height='36' rx='7' fill='%230a0e17' stroke='%23d4a054' stroke-width='3.5'/><text x='60' y='63' font-family='monospace' font-size='18' font-weight='700' fill='%23d4a054' text-anchor='middle'>Fe</text></svg>">
+<style>
+  :root{
+    --bg:#0a0e17;
+    --surface:#121826;
+    --surface2:#1a2233;
+    --surface3:#212b40;
+    --text:#e8ecf3;
+    --muted:#8b96ab;
+    --line: rgba(255,255,255,0.06);
+    --brass:#d4a054;
+    --brass-dim: rgba(212,160,84,0.35);
+    --am:#ff6b6b; --ae:#ffa94d; --tm:#ffd43b; --pt:#a9e34b; --mo:#63e6be;
+    --nm:#4dabf7; --hal:#22d3ee; --ng:#b197fc; --la:#f783ac; --ac:#e599f7; --un:#6b7280;
+    --card-scale:1;
+  }
+  html.light{
+    --bg:#f2f0e8;
+    --surface:#ffffff;
+    --surface2:#f7f5ee;
+    --surface3:#ece8dc;
+    --text:#181510;
+    --muted:#6b6455;
+    --line: rgba(20,15,5,0.08);
+    --brass:#a5722c;
+    --brass-dim: rgba(165,114,44,0.35);
+  }
+  /* High-contrast / colorblind-safe palette (Okabe-Ito, distinguishable under most color-vision deficiencies) */
+  html.contrast{
+    --bg:#000000; --surface:#0d0d0d; --surface2:#1a1a1a; --surface3:#262626;
+    --text:#ffffff; --muted:#cfcfcf; --line: rgba(255,255,255,0.25);
+    --brass:#ffb000; --brass-dim: rgba(255,176,0,0.5);
+    --am:#e69f00; --ae:#56b4e9; --tm:#f0e442; --pt:#009e73; --mo:#0072b2;
+    --nm:#d55e00; --hal:#cc79a7; --ng:#999999; --la:#e69f00; --ac:#56b4e9; --un:#666666;
+  }
+  html.contrast .cell{border-width:2px;}
+  html.contrast .cell .nm, html.contrast .cell .z{color:var(--text);}
+  /* Reading/study mode: larger, calmer typography for the modal's prose */
+  html.study .story, html.study .info-item, html.study .section-title{font-size:1.18em;line-height:2.2;}
+  html.study .modal{background:#f4ecd8;color:#2b2216;}
+  html.study .modal .story{background:#eaddc0;border-color:#d8c69f;}
+  html.study .modal .info-item{background:#eaddc0;border-color:#d8c69f;}
+  html.study .modal .k{color:#7a6a4f;}
+  html.study .modal .v{color:#2b2216;}
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--bg);color:var(--text);font-family:'Vazirmatn',sans-serif;transition:background .3s,color .3s;}
+  .mono{font-family:'IBM Plex Mono',monospace;direction:ltr;}
+  html[data-lang="en"] body{font-family:'IBM Plex Mono',monospace;}
+
+  /* faint graph-paper texture */
+  .bg-grid{
+    position:fixed;inset:0;pointer-events:none;z-index:0;opacity:.5;
+    background-image:
+      linear-gradient(var(--line) 1px, transparent 1px),
+      linear-gradient(90deg, var(--line) 1px, transparent 1px);
+    background-size:34px 34px;
+  }
+
+  header{
+    position:relative;z-index:2;
+    padding:28px 22px 18px;
+    border-bottom:1px solid var(--line);
+    background:linear-gradient(180deg, var(--surface), transparent);
+  }
+  .title-row{display:flex;align-items:baseline;gap:14px;flex-wrap:wrap;justify-content:space-between;}
+  .titles h1{
+    font-size:26px;margin:0;letter-spacing:.5px;font-weight:800;
+    color:var(--text);
+  }
+  .titles h1 .accent{color:var(--brass);}
+  .titles .sub{
+    font-family:'IBM Plex Mono',monospace;direction:ltr;text-align:right;
+    color:var(--muted);font-size:12px;letter-spacing:2px;text-transform:uppercase;margin-top:2px;
+  }
+  html[dir="rtl"] .titles .sub{text-align:right;}
+
+  .toolbar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;}
+  .btn{
+    background:var(--surface2);border:1px solid var(--line);color:var(--text);
+    padding:8px 14px;border-radius:7px;font-size:13px;cursor:pointer;font-family:inherit;
+    transition:all .15s;white-space:nowrap;
+  }
+  .btn:hover{border-color:var(--brass-dim);color:var(--brass);}
+  .btn.active{background:var(--brass);color:#0a0e17;border-color:var(--brass);font-weight:600;}
+
+  .search-wrap{position:relative;flex:1;min-width:180px;max-width:320px;}
+  .search-wrap input{
+    width:100%;padding:9px 14px;border-radius:7px;border:1px solid var(--line);
+    background:var(--surface2);color:var(--text);font-family:inherit;font-size:14px;outline:none;
+  }
+  .search-wrap input:focus{border-color:var(--brass);}
+
+  .filters{
+    display:flex;gap:8px;flex-wrap:wrap;padding:14px 22px;position:relative;z-index:2;
+    border-bottom:1px solid var(--line);
+  }
+  .filter-chip{
+    display:flex;align-items:center;gap:6px;padding:5px 11px;border-radius:20px;
+    border:1px solid var(--line);background:var(--surface2);font-size:12px;cursor:pointer;
+    color:var(--muted);transition:all .15s;
+  }
+  .filter-chip .dot{width:9px;height:9px;border-radius:50%;flex-shrink:0;}
+  .filter-chip.active{border-color:var(--cat-color,var(--brass));color:var(--text);background:var(--surface3);}
+
+  .zoom-row{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--muted);}
+  .zoom-row input[type=range]{width:100px;accent-color:var(--brass);}
+
+  main{position:relative;z-index:1;padding:26px 22px 60px;overflow-x:auto;}
+  .legend-note{font-size:12px;color:var(--muted);margin-bottom:16px;max-width:640px;line-height:1.9;}
+
+  .table-grid{
+    direction:ltr;
+    display:grid;
+    grid-template-columns:repeat(18, minmax(52px, 1fr));
+    grid-auto-rows:minmax(52px,auto);
+    gap:4px;
+    width:max-content;
+    min-width:100%;
+    transform:scale(var(--card-scale));
+    transform-origin:top left;
+    transition:transform .15s;
+  }
+  .cell{
+    position:relative;border-radius:6px;padding:5px 6px;cursor:pointer;
+    border:1px solid var(--line);background:var(--surface2);
+    overflow:hidden;transition:transform .15s, box-shadow .15s, border-color .15s;
+    display:flex;flex-direction:column;justify-content:space-between;
+  }
+  .cell::before{
+    content:"";position:absolute;inset:0;
+    background:radial-gradient(circle at 85% 15%, var(--cc,var(--brass)) 0%, transparent 55%);
+    opacity:.15;pointer-events:none;
+  }
+  .cell:hover{transform:translateY(-3px) scale(1.06);z-index:5;box-shadow:0 8px 22px rgba(0,0,0,.35);border-color:var(--cc,var(--brass));}
+  .cell.dim{opacity:.15;pointer-events:none;}
+  .cell.hit{outline:2px solid var(--brass);}
+  .cell .z{font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--muted);}
+  .cell .sym{font-family:'IBM Plex Mono',monospace;font-size:19px;font-weight:700;color:var(--text);line-height:1;}
+  .cell .nm{font-size:9px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .cell .tick{position:absolute;bottom:0;left:0;right:0;height:3px;background:var(--cc,var(--brass));}
+
+  .placeholder{
+    display:flex;align-items:center;justify-content:center;
+    border:1px dashed var(--line);border-radius:6px;background:var(--surface);
+    font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--muted);text-align:center;
+  }
+
+  /* Modal */
+  .overlay{
+    position:fixed;inset:0;background:rgba(0,0,0,.6);backdrop-filter:blur(3px);
+    display:none;align-items:center;justify-content:center;z-index:50;padding:18px;
+  }
+  .overlay.show{display:flex;}
+  .modal{
+    background:var(--surface);border:1px solid var(--line);border-radius:14px;
+    max-width:640px;width:100%;max-height:88vh;overflow-y:auto;position:relative;
+    box-shadow:0 30px 80px rgba(0,0,0,.5);
+  }
+  .modal-head{
+    padding:22px 24px 16px;border-bottom:1px solid var(--line);position:relative;
+    background:linear-gradient(135deg, var(--surface3), transparent);
+  }
+  .modal-head .cat-bar{position:absolute;top:0;left:0;right:0;height:4px;background:var(--cc,var(--brass));border-radius:14px 14px 0 0;}
+  .close-btn{
+    position:absolute;top:16px;left:16px;background:var(--surface2);border:1px solid var(--line);
+    color:var(--text);width:30px;height:30px;border-radius:50%;cursor:pointer;font-size:15px;line-height:1;
+  }
+  .modal-head-top{display:flex;align-items:center;gap:16px;}
+  .modal-symbol{
+    font-family:'IBM Plex Mono',monospace;font-size:42px;font-weight:700;
+    width:76px;height:76px;border-radius:10px;display:flex;align-items:center;justify-content:center;
+    background:var(--surface2);border:1px solid var(--cc,var(--brass));color:var(--text);flex-shrink:0;
+  }
+  .modal-titles h2{margin:0;font-size:20px;}
+  .modal-titles .en{font-family:'IBM Plex Mono',monospace;color:var(--muted);font-size:13px;direction:ltr;text-align:right;}
+  .modal-titles .catname{
+    display:inline-block;margin-top:6px;font-size:11px;padding:2px 9px;border-radius:12px;
+    background:var(--cc,var(--brass));color:#0a0e17;font-weight:700;
+  }
+  .modal-body{padding:20px 24px 26px;}
+  .section-title{
+    font-size:12px;letter-spacing:1px;text-transform:uppercase;color:var(--brass);
+    margin:20px 0 10px;font-weight:700;
+  }
+  .section-title:first-child{margin-top:0;}
+  .info-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px 16px;}
+  .info-item{display:flex;justify-content:space-between;gap:8px;padding:7px 10px;background:var(--surface2);border-radius:7px;font-size:13px;border:1px solid var(--line);}
+  .info-item .k{color:var(--muted);}
+  .info-item .v{font-family:'IBM Plex Mono',monospace;font-weight:600;direction:ltr;}
+  .story{font-size:14px;line-height:2;background:var(--surface2);padding:14px 16px;border-radius:8px;border:1px solid var(--line);border-right:3px solid var(--brass);}
+  html[dir="ltr"] .story, html[data-lang="en"] .story{border-right:none;border-left:3px solid var(--brass);}
+
+  .chart-item{margin-bottom:14px;}
+  .chart-label{display:flex;justify-content:space-between;font-size:12px;color:var(--muted);margin-bottom:5px;}
+  .chart-label .val{font-family:'IBM Plex Mono',monospace;color:var(--text);}
+  .bar-bg{height:8px;border-radius:4px;background:var(--surface2);overflow:hidden;border:1px solid var(--line);}
+  .bar-fill{height:100%;border-radius:4px;background:var(--cc,var(--brass));transition:width .5s;}
+
+  .empty-msg{text-align:center;padding:60px 20px;color:var(--muted);font-size:14px;}
+
+  .ox-badge{display:inline-flex;align-items:center;justify-content:center;min-width:34px;padding:4px 8px;border-radius:7px;font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:700;}
+  .ox-badge.pos{background:rgba(90,200,120,0.18);color:#5ad478;border:1px solid rgba(90,200,120,0.4);}
+  .ox-badge.neg{background:rgba(230,90,90,0.18);color:#ff7a7a;border:1px solid rgba(230,90,90,0.4);}
+  .similar-chip{display:inline-flex;align-items:center;gap:5px;padding:5px 10px;border-radius:8px;background:var(--surface2);border:1px solid var(--line);font-size:12px;cursor:pointer;transition:border-color .15s;}
+  .similar-chip:hover{border-color:var(--brass);}
+  .similar-chip .sc-sym{font-family:'IBM Plex Mono',monospace;font-weight:700;}
+
+  footer{padding:20px 22px 40px;text-align:center;color:var(--muted);font-size:12px;}
+
+  @media (max-width:720px){
+    .titles h1{font-size:20px;}
+    .info-grid{grid-template-columns:1fr;}
+    .modal-symbol{width:60px;height:60px;font-size:32px;}
+  }
+
+  .cell.kbd-focus{outline:3px solid var(--brass);z-index:6;}
+  .cell.hl-line{box-shadow:inset 0 0 0 2px var(--brass);}
+  .cell .fav-badge{position:absolute;top:2px;left:3px;font-size:10px;color:var(--brass);display:none;}
+  .cell.is-fav .fav-badge{display:block;}
+
+  .day-widget{
+    display:flex;align-items:center;gap:10px;padding:8px 12px;border-radius:10px;
+    background:var(--surface2);border:1px solid var(--brass-dim);cursor:pointer;font-size:12px;
+  }
+  .day-widget .dw-sym{font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:18px;color:var(--brass);}
+
+  .heat-legend{display:flex;align-items:center;gap:8px;font-size:11px;color:var(--muted);}
+  .heat-bar{width:120px;height:8px;border-radius:4px;background:linear-gradient(90deg,#3b82f6,#eab308,#ef4444);}
+
+  .timeline-wrap{margin-top:34px;padding:18px 22px;border-top:1px solid var(--line);position:relative;z-index:1;}
+  .timeline-scroll{position:relative;height:70px;overflow-x:auto;overflow-y:visible;border:1px solid var(--line);border-radius:8px;background:var(--surface2);}
+  .timeline-track{position:relative;height:100%;}
+  .tl-dot{position:absolute;bottom:10px;width:8px;height:8px;border-radius:50%;cursor:pointer;transform:translateX(-50%);transition:transform .15s;}
+  .tl-dot:hover{transform:translateX(-50%) scale(1.8);}
+  .tl-axis{position:absolute;bottom:2px;left:0;right:0;height:1px;background:var(--line);}
+  .tl-tick{position:absolute;bottom:0;font-size:9px;color:var(--muted);font-family:'IBM Plex Mono',monospace;transform:translateX(-50%);}
+
+  .side-overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);backdrop-filter:blur(3px);display:none;align-items:center;justify-content:center;z-index:60;padding:18px;}
+  .side-overlay.show{display:flex;}
+  .side-panel{background:var(--surface);border:1px solid var(--line);border-radius:14px;max-width:760px;width:100%;max-height:88vh;overflow-y:auto;padding:22px 24px;position:relative;}
+  .compare-col{background:var(--surface2);border:1px solid var(--line);border-radius:8px;padding:10px;font-size:12px;}
+  .compare-col .cc-sym{font-family:'IBM Plex Mono',monospace;font-size:22px;font-weight:700;}
+  .game-choice{display:block;width:100%;text-align:right;padding:10px 14px;margin:6px 0;border-radius:8px;background:var(--surface2);border:1px solid var(--line);color:var(--text);cursor:pointer;font-family:inherit;font-size:14px;}
+  .game-choice:hover{border-color:var(--brass);}
+  .game-choice.correct{border-color:#5ad478;background:rgba(90,200,120,0.15);}
+  .game-choice.wrong{border-color:#ff7a7a;background:rgba(230,90,90,0.15);}
+
+  @media print{
+    header, .filters, footer, .timeline-wrap, .day-widget, .overlay, .side-overlay{display:none !important;}
+    body{background:#fff;color:#000;}
+    main{padding:0;}
+  }
+</style>
+</head>
+<body>
+<div class="bg-grid"></div>
+<div id="dayWidget" class="day-widget" style="position:fixed;top:14px;left:14px;z-index:40;">
+  <span class="dw-sym mono" id="dwSym">Fe</span>
+  <span id="dwLabel">عنصر امروز</span>
+</div>
+
+<header>
+  <div class="title-row">
+    <div class="titles" style="display:flex;align-items:center;gap:12px;">
+      <svg width="40" height="40" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg" style="flex-shrink:0;filter:drop-shadow(0 2px 6px rgba(0,0,0,.4));">
+        <rect width="120" height="120" rx="24" fill="var(--surface2)"/>
+        <g fill="var(--brass)">
+          <rect x="45" y="96" width="30" height="18" rx="8"/>
+          <rect x="30" y="68" width="60" height="34" rx="16"/>
+          <rect x="14" y="60" width="16" height="34" rx="7" transform="rotate(-35 22 77)"/>
+          <rect x="34" y="34" width="13" height="42" rx="6" transform="rotate(-14 40 55)"/>
+          <rect x="50" y="24" width="13" height="50" rx="6" transform="rotate(-4 56 49)"/>
+          <rect x="66" y="26" width="13" height="48" rx="6" transform="rotate(6 72 50)"/>
+          <rect x="81" y="36" width="13" height="40" rx="6" transform="rotate(16 87 56)"/>
+        </g>
+        <g stroke="var(--surface2)" stroke-width="2.5" stroke-linecap="round">
+          <line x1="36" y1="50" x2="47" y2="48" transform="rotate(-14 40 55)"/>
+          <line x1="52" y1="42" x2="63" y2="41" transform="rotate(-4 56 49)"/>
+          <line x1="68" y1="44" x2="79" y2="43" transform="rotate(6 72 50)"/>
+          <line x1="83" y1="50" x2="94" y2="49" transform="rotate(16 87 56)"/>
+        </g>
+        <rect x="42" y="38" width="36" height="36" rx="7" fill="var(--surface2)" stroke="var(--brass)" stroke-width="3.5"/>
+        <text x="60" y="63" font-family="IBM Plex Mono, monospace" font-size="18" font-weight="700" fill="var(--brass)" text-anchor="middle">Fe</text>
+      </svg>
+      <div>
+        <h1 style="margin:0;"><span id="mainTitle">جدول تناوبی عناصر</span></h1>
+        <div class="sub" id="subTitle">THE PERIODIC TABLE · 118 ELEMENTS</div>
+      </div>
+    </div>
+    <div class="toolbar">
+      <div class="search-wrap">
+        <input type="text" id="searchInput" aria-label="جستجوی عنصر" placeholder="جستجو: نام، نماد یا عدد اتمی…">
+      </div>
+      <button class="btn" id="randomBtn">🎲 <span id="randomLbl">تصادفی</span></button>
+      <select id="heatSelect" class="btn" style="cursor:pointer;">
+        <option value="off">🔥 نقشه حرارتی: خاموش</option>
+        <option value="mass">نقشه حرارتی: جرم اتمی</option>
+        <option value="mp">نقشه حرارتی: نقطه ذوب</option>
+        <option value="bp">نقشه حرارتی: نقطه جوش</option>
+        <option value="dens">نقشه حرارتی: چگالی</option>
+        <option value="eneg">نقشه حرارتی: الکترونگاتیوی</option>
+        <option value="year">نقشه حرارتی: سال کشف</option>
+      </select>
+      <button class="btn" id="compareBtn">⚖ مقایسه</button>
+      <button class="btn" id="gameBtn">🎮 بازی حدس عنصر</button>
+      <button class="btn" id="trendsBtn">📘 روندهای تناوبی</button>
+      <button class="btn" id="mendeleevBtn">📜 درباره مندلیف</button>
+      <button class="btn" id="extendedBtn">🔭 عناصر تئوری ۱۱۹–۱۶۸</button>
+      <button class="btn" id="flashBtn">🃏 فلش‌کارت</button>
+      <button class="btn" id="myPanelBtn">📌 من (<span id="favCount">0</span>)</button>
+      <button class="btn" id="calcBtn">🔄 مبدل و ماشین‌حساب مول</button>
+      <button class="btn" id="printBtn">🖨 چاپ</button>
+      <button class="btn" id="csvBtn">CSV ⬇</button>
+      <button class="btn" id="jsonBtn">JSON ⬇</button>
+      <button class="btn" id="xlsxBtn">Excel ⬇</button>
+      <button class="btn" id="contrastBtn">🎨 کنتراست بالا</button>
+      <button class="btn" id="studyBtn">📖 حالت مطالعه</button>
+      <button class="btn" id="langBtn">EN</button>
+      <button class="btn" id="themeBtn">☀️ روشن</button>
+    </div>
+  </div>
+</header>
+
+<div class="filters" id="filtersRow">
+  <!-- category chips injected by JS -->
+  <div id="chipContainer" style="display:contents;"></div>
+  <span id="filterSep" style="width:1px;background:var(--line);align-self:stretch;margin:0 4px;"></span>
+  <div class="zoom-row">
+    <span id="zoomLabel">اندازه</span>
+    <input type="range" id="zoomSlider" min="55" max="130" value="100">
+  </div>
+</div>
+
+<div class="filters" id="filtersRow2">
+  <div id="stateContainer" style="display:contents;"></div>
+  <span style="width:1px;background:var(--line);align-self:stretch;margin:0 4px;"></span>
+  <div id="blockContainer" style="display:contents;"></div>
+  <span style="width:1px;background:var(--line);align-self:stretch;margin:0 4px;"></span>
+  <div class="zoom-row">
+    <span id="rangeLabel">بازه عدد اتمی</span>
+    <input type="number" id="zFrom" min="1" max="118" value="1" style="width:52px;background:var(--surface2);border:1px solid var(--line);color:var(--text);border-radius:6px;padding:4px 6px;font-family:'IBM Plex Mono',monospace;">
+    <span>–</span>
+    <input type="number" id="zTo" min="1" max="118" value="118" style="width:52px;background:var(--surface2);border:1px solid var(--line);color:var(--text);border-radius:6px;padding:4px 6px;font-family:'IBM Plex Mono',monospace;">
+  </div>
+  <span style="width:1px;background:var(--line);align-self:stretch;margin:0 4px;"></span>
+  <div class="filter-chip" id="favOnlyChip">⭐ <span id="favOnlyLbl">فقط علاقه‌مندی‌ها</span></div>
+  <span style="width:1px;background:var(--line);align-self:stretch;margin:0 4px;"></span>
+  <div class="heat-legend" id="heatLegend" style="display:none;">
+    <span id="heatMinLbl">کم</span><div class="heat-bar"></div><span id="heatMaxLbl">زیاد</span>
+  </div>
+</div>
+
+<main>
+  <p class="legend-note" id="legendNote">روی هر عنصر کلیک کنید تا اطلاعات کامل آن شامل خواص فیزیکی، شیمیایی، تاریخچه کشف، کاربردها و نمودار مقایسه‌ای باز شود.</p>
+  <div class="table-grid" id="grid"></div>
+  <div class="empty-msg" id="emptyMsg" style="display:none;">نتیجه‌ای یافت نشد.</div>
+</main>
+
+<div class="timeline-wrap">
+  <p class="legend-note" id="timelineLabel" style="margin-bottom:10px;">تایم‌لاین کشف عناصر — روی هر نقطه کلیک کنید</p>
+  <div class="timeline-scroll" id="timelineScroll">
+    <div class="timeline-track" id="timelineTrack"></div>
+  </div>
+</div>
+
+<footer id="footerNote">داده‌ها جنبه آموزشی دارند · Educational periodic table reference · سازنده: Mr.black</footer>
+
+<!-- COMPARE PANEL -->
+<div class="side-overlay" id="compareOverlay">
+  <div class="side-panel">
+    <button class="close-btn" id="compareCloseBtn" style="position:absolute;top:16px;left:16px;">✕</button>
+    <div class="section-title" style="margin-top:0;">⚖ مقایسه عناصر (تا ۴ عنصر)</div>
+    <div style="margin-bottom:14px;">
+      <input type="text" id="compareSearch" placeholder="نام یا نماد عنصر را برای افزودن تایپ کنید…" style="width:100%;padding:9px 14px;border-radius:7px;border:1px solid var(--line);background:var(--surface2);color:var(--text);font-family:inherit;font-size:14px;outline:none;">
+      <div id="compareSuggest" style="margin-top:6px;display:flex;flex-wrap:wrap;gap:6px;"></div>
+    </div>
+    <div id="compareGrid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;"></div>
+  </div>
+</div>
+
+<!-- GAME PANEL -->
+<div class="side-overlay" id="gameOverlay">
+  <div class="side-panel" style="max-width:460px;text-align:center;">
+    <button class="close-btn" id="gameCloseBtn" style="position:absolute;top:16px;left:16px;">✕</button>
+    <div class="section-title" style="margin-top:0;">🎮 بازی حدس عنصر</div>
+    <div style="display:flex;justify-content:center;gap:16px;margin-bottom:10px;">
+      <select id="gameDifficulty" class="btn" style="cursor:pointer;">
+        <option value="easy">آسان (گروه و دوره نمایش داده می‌شود)</option>
+        <option value="medium">متوسط (فقط خواص)</option>
+        <option value="hard">سخت (فقط عدد اتمی و جرم)</option>
+      </select>
+    </div>
+    <div class="mono" style="font-size:12px;color:var(--muted);margin-bottom:10px;">امتیاز: <span id="gameScore">0</span> · دور: <span id="gameRound">0</span></div>
+    <div id="gameClue" style="background:var(--surface2);border:1px solid var(--line);border-radius:10px;padding:18px;margin-bottom:14px;min-height:70px;display:flex;align-items:center;justify-content:center;font-size:15px;"></div>
+    <div id="gameChoices"></div>
+    <button class="btn" id="gameNextBtn" style="margin-top:10px;">دور بعدی ▶</button>
+  </div>
+</div>
+
+<!-- TRENDS EXPLAINER PANEL -->
+<div class="side-overlay" id="trendsOverlay">
+  <div class="side-panel" style="max-width:600px;">
+    <button class="close-btn" id="trendsCloseBtn" style="position:absolute;top:16px;left:16px;">✕</button>
+    <div class="section-title" style="margin-top:0;" id="trendsTitle">📘 روندهای تناوبی</div>
+    <div id="trendsBody" style="font-size:14px;line-height:2.1;"></div>
+  </div>
+</div>
+
+<!-- ABOUT MENDELEEV PANEL -->
+<div class="side-overlay" id="mendeleevOverlay">
+  <div class="side-panel" style="max-width:680px;">
+    <button class="close-btn" id="mendeleevCloseBtn" style="position:absolute;top:16px;left:16px;">✕</button>
+    <div class="section-title" style="margin-top:0;">📜 دیمیتری مندلیف و جدول تناوبی</div>
+    <div style="font-size:14px;line-height:2.2;">
+      <p><b style="color:var(--brass);">زندگی‌نامه</b><br>
+      دیمیتری ایوانوویچ مندلیف (Dmitri Ivanovich Mendeleev) در ۸ فوریه ۱۸۳۴ در شهر تبولسک در سیبری روسیه به دنیا آمد؛ او آخرین فرزند از خانواده‌ای پرجمعیت بود. در دوران کودکی پدرش نابینا شد و مادرش به‌تنهایی یک کارخانه شیشه‌سازی را اداره می‌کرد تا خانواده را سرپا نگه دارد. مادرش پس از مرگ پدر، مندلیف را به سنت‌پترزبورگ برد تا بتواند در دانشگاه تحصیل کند؛ او در مؤسسه تربیت معلم اصلی سنت‌پترزبورگ شیمی خواند و بعدها برای ادامه تحصیل به آلمان (هایدلبرگ) رفت. مندلیف در نهایت استاد شیمی دانشگاه سنت‌پترزبورگ شد.</p>
+
+      <p><b style="color:var(--brass);">کشف قانون تناوبی (۱۸۶۹)</b><br>
+      مندلیف در حال نوشتن یک کتاب درسی شیمی بود و برای نظم‌دادن به ۶۳ عنصر شناخته‌شده آن زمان، ویژگی‌های هر عنصر را روی کارت می‌نوشت. با چیدن این کارت‌ها بر اساس افزایش جرم اتمی، متوجه شد که ویژگی‌های شیمیایی عناصر به‌صورت تناوبی (دوره‌ای) تکرار می‌شوند — یعنی اگر عناصر را به ترتیب جرم اتمی بچینیم، هر چند عنصر یک‌بار الگوی مشابهی از خواص شیمیایی بازمی‌گردد. در ۶ مارس ۱۸۶۹ این «قانون تناوبی» را به انجمن شیمی روسیه ارائه کرد.</p>
+
+      <p><b style="color:var(--brass);">نبوغ اصلی: جای خالی برای آینده</b><br>
+      نکته‌ای که جدول مندلیف را از تلاش‌های مشابه دیگران (مانند «قانون هشت‌تایی» نیولندز در انگلستان یا جدول یولیوس لوتار مایر در آلمان که تقریباً هم‌زمان به نتایج مشابهی رسیده بود) متمایز کرد، جسارت او بود: در مواردی که عنصر بعدی با الگوی مورد انتظار جور درنمی‌آمد، به‌جای شکستن نظم جدول، آن خانه را خالی گذاشت و اعلام کرد عنصری هنوز کشف‌نشده باید آنجا قرار بگیرد. او حتی جرم اتمی، چگالی و رفتار شیمیایی این عناصر ناشناخته را پیش‌بینی کرد و نام‌های موقت مانند «اکا-آلومینیوم» و «اکا-سیلیسیوم» به آن‌ها داد.</p>
+
+      <p><b style="color:var(--brass);">پیش‌بینی‌هایی که به‌طرز خیره‌کننده‌ای درست از آب درآمدند</b><br>
+      طی ۲۰ سال بعد، سه عنصر پیش‌بینی‌شده او یکی‌یکی کشف شدند و خواصشان تقریباً دقیقاً با پیش‌بینی مندلیف مطابقت داشت: گالیم (۱۸۷۵، همان «اکا-آلومینیوم»)، اسکاندیم (۱۸۷۹، همان «اکا-بور») و ژرمانیوم (۱۸۸۶، همان «اکا-سیلیسیوم»). این دقت در پیش‌بینی، جدول مندلیف را از یک ابزار طبقه‌بندی صرف به یک نظریه علمی معتبر و قدرتمند تبدیل کرد و او را در سطح جهانی مشهور ساخت.</p>
+
+      <p><b style="color:var(--brass);">چرا بعدها جدول اصلاح شد</b><br>
+      جدول اصلی مندلیف بر اساس جرم اتمی چیده شده بود، اما در چند مورد (مانند تلوریم و ید) این ترتیب با خواص شیمیایی عناصر ناسازگار بود. مندلیف در این موارد عناصر را بر اساس خواص شیمیایی‌شان جابه‌جا کرد، هرچند دلیل درست آن را نمی‌دانست. علت واقعی در سال ۱۹۱۳ توسط فیزیک‌دان جوان انگلیسی هنری موزلی روشن شد: ترتیب درست عناصر بر اساس عدد اتمی (تعداد پروتون‌های هسته) است، نه جرم اتمی — همان معیاری که امروز در تمام جدول‌های تناوبی از جمله همین جدول استفاده می‌شود.</p>
+
+      <p><b style="color:var(--brass);">سرنوشت و میراث</b><br>
+      علی‌رغم شهرت جهانی، مندلیف هرگز جایزه نوبل شیمی را دریافت نکرد؛ در سال ۱۹۰۶ کمیته نوبل در رأی‌گیری بسیار نزدیکی این جایزه را به هانری موآسان اعطا کرد، و مندلیف پیش از فرصتی دیگر، در ۲ فوریه ۱۹۰۷ در سن‌پترزبورگ درگذشت. به افتخار او، عنصر ۱۰۱ در سال ۱۹۵۵ «مندلویم» نام‌گذاری شد. امروزه جدول تناوبی، با اصلاحات و افزوده‌شدن عناصر مصنوعی، همچنان بر همان اصل بنیادین مندلیف استوار است: ویژگی‌های عناصر تابعی تناوبی از ساختار اتمی آن‌هاست.</p>
+    </div>
+  </div>
+</div>
+
+<!-- EXTENDED THEORETICAL ELEMENTS (119-168) -->
+<div class="side-overlay" id="extendedOverlay">
+  <div class="side-panel" style="max-width:760px;">
+    <button class="close-btn" id="extendedCloseBtn" style="position:absolute;top:16px;left:16px;">✕</button>
+    <div class="section-title" style="margin-top:0;">🔭 فراتر از عنصر ۱۱۸: جدول تناوبی گسترش‌یافته</div>
+    <div style="font-size:14px;line-height:2.1;margin-bottom:18px;">
+      <p>هیچ‌کدام از عناصر ۱۱۹ تا ۱۶۸ تاکنون کشف یا ساخته نشده‌اند — این جدول صرفاً فهرست نام‌های موقت رسمی آن‌هاست، نه داده‌های واقعی. تا زمانی که عنصری واقعاً در شتاب‌دهنده ذرات سنتز نشود (معمولاً با برخورددادن هسته دو عنصر سنگین به هم و ثبت چند اتم آن برای کسری از ثانیه)، هیچ جرم، نقطه ذوب یا چگالی واقعی برایش وجود ندارد؛ به همین دلیل این‌ها را در جدول اصلی نگذاشتم.</p>
+      <p><b style="color:var(--brass);">نام‌های موقت از کجا می‌آیند؟</b><br>
+      اتحادیه بین‌المللی شیمی محض و کاربردی (IUPAC) یک الگوریتم دقیق و رسمی برای نام‌گذاری موقت عناصر کشف‌نشده دارد: هر رقم عدد اتمی به یک ریشه لاتین نگاشت می‌شود (nil=۰, un=۱, bi=۲, tri=۳, quad=۴, pent=۵, hex=۶, sept=۷, oct=۸, enn=۹) و این ریشه‌ها کنار هم با پسوند «ium‑» نام را می‌سازند. همین الگوریتم دقیقاً همان چیزی بود که عناصر ۱۱۳ تا ۱۱۸ پیش از نام‌گذاری نهایی‌شان (نیهونیم، فلروویم، مسکوویم، لیورموریم، تنسین، اوگانسون) با آن شناخته می‌شدند — مثلاً عنصر ۱۱۷ زمانی «Ununseptium» نام داشت.</p>
+      <p><b style="color:var(--brass);">جزیره پایداری</b><br>
+      نظریه‌پردازان پیش‌بینی می‌کنند حوالی عدد اتمی ۱۱۴ تا ۱۲۶ (بسته به مدل نظری) ممکن است ایزوتوپ‌هایی با نیمه‌عمر نسبتاً طولانی‌تر از همسایگانشان وجود داشته باشند — پدیده‌ای که به آن «جزیره پایداری» می‌گویند. عناصر ۱۱۹ و ۱۲۰ در حال حاضر هدف اصلی تلاش‌های آزمایشگاه‌های دوبنا (روسیه) و GSI/RIKEN (آلمان و ژاپن) برای سنتز هستند، اما فراتر از حدود عدد اتمی ۱۴۰، حتی مدل‌های نظری هم به دلیل اثرات نسبیتی شدید بر الکترون‌ها، دیگر پیش‌بینی قابل‌اعتمادی ارائه نمی‌دهند.</p>
+    </div>
+    <div id="extendedGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px;"></div>
+  </div>
+</div>
+
+<!-- FLASHCARD PANEL -->
+
+<div class="side-overlay" id="flashOverlay">
+  <div class="side-panel" style="max-width:420px;text-align:center;">
+    <button class="close-btn" id="flashCloseBtn" style="position:absolute;top:16px;left:16px;">✕</button>
+    <div class="section-title" style="margin-top:0;" id="flashTitle">🃏 فلش‌کارت</div>
+    <div id="flashCard" style="background:var(--surface2);border:1px solid var(--line);border-radius:12px;padding:30px 18px;margin-bottom:14px;min-height:150px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;cursor:pointer;">
+      <div class="mono" id="flashSym" style="font-size:44px;font-weight:700;color:var(--brass);"></div>
+      <div id="flashBack" style="display:none;font-size:14px;color:var(--text);text-align:center;"></div>
+      <div id="flashHint" style="font-size:12px;color:var(--muted);"></div>
+    </div>
+    <button class="btn" id="flashNextBtn">کارت بعدی ▶</button>
+  </div>
+</div>
+
+<!-- MY PANEL: favorites, history, progress -->
+<div class="side-overlay" id="myPanelOverlay">
+  <div class="side-panel">
+    <button class="close-btn" id="myPanelCloseBtn" style="position:absolute;top:16px;left:16px;">✕</button>
+    <div class="section-title" style="margin-top:0;">📌 پیشرفت مطالعه</div>
+    <div class="mono" id="progressText" style="font-size:13px;color:var(--muted);margin-bottom:6px;"></div>
+    <div class="bar-bg" style="margin-bottom:20px;"><div class="bar-fill" id="progressBar" style="width:0%;"></div></div>
+
+    <div class="section-title">⭐ علاقه‌مندی‌ها</div>
+    <div id="favList" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:20px;"></div>
+
+    <div class="section-title">🕒 اخیراً بازدید شده</div>
+    <div id="historyList" style="display:flex;flex-wrap:wrap;gap:8px;"></div>
+  </div>
+</div>
+
+<!-- UNIT / MOLE CALCULATOR -->
+<div class="side-overlay" id="calcOverlay">
+  <div class="side-panel" style="max-width:480px;">
+    <button class="close-btn" id="calcCloseBtn" style="position:absolute;top:16px;left:16px;">✕</button>
+    <div class="section-title" style="margin-top:0;">🌡 مبدل دما</div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:8px;">
+      <input type="number" id="tempK" placeholder="کلوین (K)" style="width:110px;padding:8px;border-radius:7px;border:1px solid var(--line);background:var(--surface2);color:var(--text);font-family:'IBM Plex Mono',monospace;">
+      <input type="number" id="tempC" placeholder="سلسیوس (°C)" style="width:110px;padding:8px;border-radius:7px;border:1px solid var(--line);background:var(--surface2);color:var(--text);font-family:'IBM Plex Mono',monospace;">
+      <input type="number" id="tempF" placeholder="فارنهایت (°F)" style="width:110px;padding:8px;border-radius:7px;border:1px solid var(--line);background:var(--surface2);color:var(--text);font-family:'IBM Plex Mono',monospace;">
+    </div>
+    <p style="font-size:12px;color:var(--muted);margin-top:0;">هر عدد را در یک فیلد وارد کنید — بقیه خودکار محاسبه می‌شوند.</p>
+
+    <div class="section-title">⚗️ ماشین‌حساب جرم مولی (مول ⇄ گرم)</div>
+    <div style="margin-bottom:10px;">
+      <input type="text" id="molElementSearch" placeholder="نام یا نماد عنصر (مثلاً Fe یا آهن)…" style="width:100%;padding:9px 14px;border-radius:7px;border:1px solid var(--line);background:var(--surface2);color:var(--text);font-family:inherit;font-size:14px;outline:none;">
+      <div id="molSuggest" style="margin-top:6px;display:flex;flex-wrap:wrap;gap:6px;"></div>
+    </div>
+    <div id="molSelected" class="mono" style="font-size:13px;color:var(--muted);margin-bottom:10px;"></div>
+    <div style="display:flex;gap:10px;align-items:center;">
+      <input type="number" id="molGrams" placeholder="جرم (گرم)" style="width:140px;padding:8px;border-radius:7px;border:1px solid var(--line);background:var(--surface2);color:var(--text);font-family:'IBM Plex Mono',monospace;">
+      <span>⇄</span>
+      <input type="number" id="molMoles" placeholder="تعداد مول" style="width:140px;padding:8px;border-radius:7px;border:1px solid var(--line);background:var(--surface2);color:var(--text);font-family:'IBM Plex Mono',monospace;">
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="overlay" role="dialog" aria-modal="true">
+  <div class="modal" id="modalBox"></div>
+</div>
+
+<script>
+/* ============ DATA ============
+z, sym, en, fa, mass, cat, row, col, ec, eneg, mp, bp, dens, state, year, disc, note */
+const RAW = [
+[1,'H','Hydrogen','هیدروژن',1.008,'nm',1,1,'1s1',2.20,14,20,0.00009,'g','1766','هنری کاوندیش','هیدروژن فراوان‌ترین عنصر جهان (حدود ۷۵٪ جرم قابل‌مشاهده کیهان) و سوخت اصلی واکنش‌های همجوشی در خورشید است. در صنعت برای تولید آمونیاک (فرآیند هابر-بوش)، پالایش نفت، و به‌عنوان سوخت پاک در پیل‌های سوختی و موشک‌های فضایی کاربرد دارد.'],
+[2,'He','Helium','هلیم',4.0026,'ng',1,18,'1s2',null,0.95,4.2,0.0001785,'g','1868','ژانسن و لاکیر','هلیم ابتدا در سال ۱۸۶۸ از طیف نور خورشید در جریان یک کسوف شناسایی شد، پیش از آنکه روی زمین یافت شود. به دلیل سبکی و بی‌اثر بودن در بادکنک‌ها و کشتی‌های هوایی، به‌عنوان گاز خنک‌کننده آهنرباهای ابررسانای دستگاه MRI، و در غواصی عمقی کاربرد دارد.'],
+[3,'Li','Lithium','لیتیم',6.94,'am',2,1,'[He] 2s1',0.98,454,1615,0.534,'s','1817','یوهان آرفودسون','لیتیم سبک‌ترین فلز جهان است و امروزه ستون فقرات باتری‌های قابل‌شارژ گوشی‌های هوشمند، لپ‌تاپ‌ها و خودروهای برقی محسوب می‌شود. ترکیبات آن همچنین در داروهای تثبیت‌کننده خلق‌وخو برای اختلال دوقطبی کاربرد دارند.'],
+[4,'Be','Beryllium','بریلیم',9.0122,'ae',2,2,'[He] 2s2',1.57,1560,2742,1.85,'s','1798','لویی ووکلن','بریلیم فلزی سبک و بسیار سفت است که در آلیاژ با مس برای ابزارهای غیرجرقه‌زا، در ساختار تلسکوپ فضایی جیمز وب، و به دلیل شفافیت نسبی در برابر اشعه ایکس در پنجره دستگاه‌های تصویربرداری پزشکی کاربرد دارد.'],
+[5,'B','Boron','بور',10.81,'mo',2,13,'[He] 2s2 2p1',2.04,2349,4200,2.34,'s','1808','دیوی و گی‌لوساک','بور در طبیعت به‌صورت ترکیباتی مانند بوراکس یافت می‌شود. در شیشه بوروسیلیکات (مانند ظروف پیرکس) در برابر شوک حرارتی مقاوم می‌سازد، و در الیاف بور برای تقویت کامپوزیت‌های هوافضا و در پودرهای شوینده کاربرد دارد.'],
+[6,'C','Carbon','کربن',12.011,'nm',2,14,'[He] 2s2 2p2',2.55,3823,4098,2.267,'s','باستان','شناخته‌شده از دیرباز','کربن پایه شیمی آلی و همه موجودات زنده است و به سه شکل الماس (سخت‌ترین ماده طبیعی)، گرافیت (در مداد و روان‌کننده‌ها) و گرافن (در الکترونیک پیشرفته) یافت می‌شود. فولاد نیز آلیاژی از آهن و کربن است.'],
+[7,'N','Nitrogen','نیتروژن',14.007,'nm',2,15,'[He] 2s2 2p3',3.04,63,77,0.001251,'g','1772','دنیل رادرفورد','نیتروژن حدود ۷۸٪ اتمسفر زمین را تشکیل می‌دهد اما به‌شکل آزاد برای اغلب موجودات غیرقابل‌استفاده است. در فرآیند هابر-بوش به آمونیاک تبدیل و پایه کودهای کشاورزی می‌شود؛ به شکل مایع برای انجماد نمونه‌های زیستی نیز کاربرد دارد.'],
+[8,'O','Oxygen','اکسیژن',15.999,'nm',2,16,'[He] 2s2 2p4',3.44,54,90,0.001429,'g','1774','پریستلی و شیله','اکسیژن برای تنفس هوازی و احتراق ضروری است و حدود ۲۱٪ اتمسفر را تشکیل می‌دهد. در بیمارستان‌ها برای اکسیژن‌درمانی، در صنعت فولاد برای کاهش کربن مذاب، و در موتورهای موشک به‌عنوان اکسیدکننده کاربرد دارد.'],
+[9,'F','Fluorine','فلوئور',18.998,'hal',2,17,'[He] 2s2 2p5',3.98,53,85,0.001696,'g','1886','هانری موآسان','فلوئور واکنش‌پذیرترین عنصر شناخته‌شده است و تا سال ۱۸۸۶ به دلیل خطرناک بودن جداسازی، کشف نشده بود. ترکیبات آن در خمیر دندان برای پیشگیری از پوسیدگی، در تفلون (پوشش ظروف نچسب) و در گازهای مبرد کاربرد دارند.'],
+[10,'Ne','Neon','نئون',20.180,'ng',2,18,'[He] 2s2 2p6',null,24.6,27.1,0.0009,'g','1898','رمزی و تراورس','نئون در سال ۱۸۹۸ از تقطیر هوای مایع به دست آمد. معروف‌ترین کاربردش تابلوهای نئون رنگی است که با عبور جریان الکتریسیته از گاز داخل لوله‌های شیشه‌ای نور قرمز-نارنجی تولید می‌کنند؛ در لیزرهای هلیم-نئون نیز کاربرد دارد.'],
+[11,'Na','Sodium','سدیم',22.990,'am',3,1,'[Ne] 3s1',0.93,371,1156,0.971,'s','1807','همفری دیوی','سدیم به‌شدت با آب واکنش می‌دهد و در طبیعت هرگز آزاد یافت نمی‌شود. نمک طعام (کلرید سدیم) رایج‌ترین ترکیب آن است؛ در لامپ‌های بخار سدیم برای روشنایی خیابانی و در شیشه‌سازی سودا-آهک نیز کاربرد دارد.'],
+[12,'Mg','Magnesium','منیزیم',24.305,'ae',3,2,'[Ne] 3s2',1.31,923,1363,1.738,'s','1808','همفری دیوی','منیزیم در آلیاژهای سبک هوافضا و خودروسازی به دلیل نسبت استحکام به وزن بالا کاربرد دارد. همچنین هسته مرکزی مولکول کلروفیل در گیاهان از منیزیم ساخته شده است.'],
+[13,'Al','Aluminium','آلومینیم',26.982,'pt',3,13,'[Ne] 3s2 3p1',1.61,933,2792,2.70,'s','1825','هانس اورستد','آلومینیوم فراوان‌ترین فلز پوسته زمین است اما استخراج آن پرهزینه بود تا الکترولیز هال-هرو در سده نوزدهم آن را ارزان کرد. امروزه در بدنه هواپیما، قوطی نوشابه، فویل آشپزخانه و سیم‌های برق فشار قوی کاربرد گسترده دارد.'],
+[14,'Si','Silicon','سیلیسیم',28.085,'mo',3,14,'[Ne] 3s2 3p2',1.90,1687,3538,2.33,'s','1824','یونس برزلیوس','سیلیسیم پس از اکسیژن فراوان‌ترین عنصر پوسته زمین است و پایه صنعت نیمه‌هادی، تراشه‌های کامپیوتری و پنل‌های خورشیدی محسوب می‌شود. ترکیبات آلی-سیلیسیمی (سیلیکون) نیز در چسب و درزگیر کاربرد دارند.'],
+[15,'P','Phosphorus','فسفر',30.974,'nm',3,15,'[Ne] 3s2 3p3',2.19,317,553,1.82,'s','1669','هنیگ برند','فسفر نخستین بار در سال ۱۶۶۹ از تقطیر ادرار انسان کشف شد. در ساختار DNA، RNA و استخوان‌ها حضور دارد؛ عمده مصرف صنعتی آن در کودهای فسفاته کشاورزی و در گذشته در سر کبریت بوده است.'],
+[16,'S','Sulfur','گوگرد',32.06,'nm',3,16,'[Ne] 3s2 3p4',2.58,388,718,2.07,'s','باستان','شناخته‌شده از دیرباز','گوگرد از دیرباز به‌صورت طبیعی در نزدیکی آتشفشان‌ها شناخته می‌شد. بیشترین کاربرد آن در تولید اسید سولفوریک، پرمصرف‌ترین ماده شیمیایی صنعتی جهان، است؛ در ولکانیزه‌کردن لاستیک نیز به کار می‌رود.'],
+[17,'Cl','Chlorine','کلر',35.45,'hal',3,17,'[Ne] 3s2 3p5',3.16,172,239,0.003214,'g','1774','کارل شیله','کلر به‌عنوان گاز سمی در جنگ جهانی اول استفاده شد، اما امروزه عمدتاً برای ضدعفونی آب آشامیدنی و استخرها و در تولید PVC، پرمصرف‌ترین پلاستیک جهان پس از پلی‌اتیلن، کاربرد دارد.'],
+[18,'Ar','Argon','آرگون',39.948,'ng',3,18,'[Ne] 3s2 3p6',null,84,87,0.001784,'g','1894','ریلی و رمزی','آرگون گاز نجیب فراوان اتمسفر زمین (حدود ۱٪) است. به دلیل بی‌اثر بودن، در لامپ‌های رشته‌ای برای جلوگیری از اکسیدشدن فیلامان و در جوشکاری قوس الکتریکی به‌عنوان گاز محافظ کاربرد دارد.'],
+[19,'K','Potassium','پتاسیم',39.098,'am',4,1,'[Ar] 4s1',0.82,337,1032,0.862,'s','1807','همفری دیوی','پتاسیم برای انتقال پیام‌های عصبی و انقباض عضلات از جمله ضربان قلب ضروری است. بیشترین مصرف صنعتی آن در کودهای پتاسه کشاورزی است.'],
+[20,'Ca','Calcium','کلسیم',40.078,'ae',4,2,'[Ar] 4s2',1.00,1115,1757,1.55,'s','1808','همفری دیوی','کلسیم سازنده اصلی استخوان و دندان است. سنگ آهک و گچ از ترکیبات آن هستند و در ساخت سیمان و بتن، صنعت ساختمان و مکمل‌های غذایی کاربرد گسترده دارد.'],
+[21,'Sc','Scandium','اسکاندیم',44.956,'tm',4,3,'[Ar] 3d1 4s2',1.36,1814,3109,2.99,'s','1879','لارس نیلسون','اسکاندیم در آلیاژهای آلومینیوم-اسکاندیم برای صنایع هوافضا و ورزشی سبک مانند دوچرخه و چوب بیسبال حرفه‌ای، و در برخی لامپ‌های پرقدرت استادیومی کاربرد دارد.'],
+[22,'Ti','Titanium','تیتانیم',47.867,'tm',4,4,'[Ar] 3d2 4s2',1.54,1941,3560,4.51,'s','1791','ویلیام گرگور','تیتانیوم نسبت استحکام به وزن بسیار بالایی دارد و در برابر خوردگی مقاوم است؛ در بدنه هواپیما و موتور جت، ایمپلنت دندانی و مفصل مصنوعی، و اکسید آن در رنگدانه سفید خمیر دندان و ضدآفتاب کاربرد دارد.'],
+[23,'V','Vanadium','وانادیم',50.942,'tm',4,5,'[Ar] 3d3 4s2',1.63,2183,3680,6.11,'s','1801','آندرس دل ریو','وانادیوم عمدتاً به فولاد افزوده می‌شود تا استحکام و مقاومت آن در برابر ضربه افزایش یابد؛ در باتری‌های جریان ردوکس وانادیوم برای ذخیره انرژی در مقیاس شبکه نیز کاربرد نوظهوری دارد.'],
+[24,'Cr','Chromium','کروم',51.996,'tm',4,6,'[Ar] 3d5 4s1',1.66,2180,2944,7.15,'s','1797','لویی ووکلن','کروم به فولاد زنگ‌نزن مقاومت در برابر خوردگی می‌دهد و در آبکاری کروم، روکش براق فلزی روی قطعات خودرو و شیرآلات، به کار می‌رود. ترکیبات آن رنگدانه‌های زرد و سبز نیز تولید می‌کنند.'],
+[25,'Mn','Manganese','منگنز',54.938,'tm',4,7,'[Ar] 3d5 4s2',1.55,1519,2334,7.44,'s','1774','یوهان گان','منگنز جزء کلیدی تولید فولاد است؛ تقریباً تمام فولاد جهان حاوی مقداری منگنز برای حذف گوگرد و اکسیژن مذاب است. در باتری‌های قلیایی یک‌بارمصرف (دی‌اکسید منگنز) نیز کاربرد دارد.'],
+[26,'Fe','Iron','آهن',55.845,'tm',4,8,'[Ar] 3d6 4s2',1.83,1811,3134,7.874,'s','باستان','شناخته‌شده از دیرباز','آهن ستون فقرات انقلاب صنعتی و پرکاربردترین فلز جهان است؛ فولاد در ساختمان‌سازی، خودروسازی و ابزارآلات کاربرد دارد. هسته هموگلوبین خون که اکسیژن را در بدن حمل می‌کند نیز از آهن ساخته شده است.'],
+[27,'Co','Cobalt','کبالت',58.933,'tm',4,9,'[Ar] 3d7 4s2',1.88,1768,3200,8.90,'s','1735','گئورگ برانت','کبالت جزء کلیدی باتری‌های لیتیوم-یون گوشی‌های هوشمند و خودروهای برقی است. ایزوتوپ رادیواکتیو کبالت-۶۰ نیز در پرتودرمانی سرطان و استریل‌سازی تجهیزات پزشکی کاربرد دارد.'],
+[28,'Ni','Nickel','نیکل',58.693,'tm',4,10,'[Ar] 3d8 4s2',1.91,1728,3003,8.908,'s','1751','آکسل کرونستد','نیکل در فولاد زنگ‌نزن برای افزایش مقاومت به خوردگی، در سکه‌های فلزی بسیاری از کشورها، و در باتری‌های نیکل-متال‌هیدرید کاربرد دارد.'],
+[29,'Cu','Copper','مس',63.546,'tm',4,11,'[Ar] 3d10 4s1',1.90,1358,2835,8.96,'s','باستان','شناخته‌شده از دیرباز','مس یکی از قدیمی‌ترین فلزات شناخته‌شده توسط بشر است و رسانایی الکتریکی بسیار بالایی دارد، به همین دلیل بیشتر سیم‌های برق جهان از آن ساخته می‌شوند. در لوله‌کشی ساختمان و آلیاژ برنز نیز کاربرد دارد.'],
+[30,'Zn','Zinc','روی',65.38,'tm',4,12,'[Ar] 3d10 4s2',1.65,693,1180,7.14,'s','باستان','شناخته‌شده از دیرباز','روی برای گالوانیزه‌کردن ورق‌های فولادی در برابر زنگ‌زدگی استفاده می‌شود و جزء ضروری آنزیم‌های بدن انسان است؛ در باتری‌های قلیایی و آلیاژ برنج نیز کاربرد دارد.'],
+[31,'Ga','Gallium','گالیم',69.723,'pt',4,13,'[Ar] 3d10 4s2 4p1',1.81,303,2673,5.91,'s','1875','پل لوکوک','گالیم در دمای کف دست (حدود ۳۰ درجه) ذوب می‌شود. در نیمه‌هادی‌های ترکیبی گالیم آرسناید و گالیم نیترید برای LEDهای آبی/سفید، لیزرهای نیمه‌هادی و مدارهای فرکانس‌بالای تلفن همراه کاربرد دارد.'],
+[32,'Ge','Germanium','ژرمانیم',72.630,'mo',4,14,'[Ar] 3d10 4s2 4p2',2.01,1211,3106,5.323,'s','1886','کلمنس وینکلر','ژرمانیوم در نخستین ترانزیستورهای نیمه‌هادی دهه ۱۹۵۰ استفاده شد. امروزه در فیبرهای نوری، لنزهای دوربین حرارتی و سلول‌های خورشیدی چندلایه فضاپیما کاربرد دارد.'],
+[33,'As','Arsenic','آرسنیک',74.922,'mo',4,15,'[Ar] 3d10 4s2 4p3',2.18,1090,887,5.776,'s','باستان','شناخته‌شده از دیرباز','آرسنیک در گذشته به‌عنوان سم شناخته می‌شد اما امروزه در نیمه‌هادی گالیم آرسناید برای تراشه‌های فرکانس‌بالا و در گذشته در نگهدارنده چوب کاربرد داشته است.'],
+[34,'Se','Selenium','سلنیم',78.971,'nm',4,16,'[Ar] 3d10 4s2 4p4',2.55,494,958,4.81,'s','1817','یونس برزلیوس','سلنیم عنصری ردی است که برای عملکرد آنتی‌اکسیدانی بدن ضروری است. در سلول‌های خورشیدی نازک‌لایه، شیشه‌سازی برای خنثی‌کردن رنگ سبز، و در گذشته در فتوکپی و یکسوکننده‌های الکترونیکی کاربرد داشته است.'],
+[35,'Br','Bromine','برم',79.904,'hal',4,17,'[Ar] 3d10 4s2 4p5',2.96,266,332,3.10,'l','1826','آنتوان بالار','برم تنها غیرفلز مایع در دمای اتاق است. ترکیبات آن در گذشته در فیلم‌های عکاسی نقره-هالید، امروزه در مواد ضدشعله پلاستیک و الکترونیک، و در برخی گندزداهای استخر کاربرد دارند.'],
+[36,'Kr','Krypton','کریپتون',83.798,'ng',4,18,'[Ar] 3d10 4s2 4p6',3.00,116,120,0.003749,'g','1898','رمزی و تراورس','کریپتون در لامپ‌های فلاش پرقدرت عکاسی، برخی لامپ‌های فلورسنت کم‌مصرف، و پنجره‌های دوجداره عایق برای کاهش انتقال حرارت کاربرد دارد.'],
+[37,'Rb','Rubidium','روبیدیم',85.468,'am',5,1,'[Kr] 5s1',0.82,312,961,1.532,'s','1861','بونزن و کیرشهوف','روبیدیم در ساعت‌های اتمی روبیدیمی، کوچک‌تر و ارزان‌تر از ساعت سزیمی و پرکاربرد در ماهواره‌های GPS، و در برخی پژوهش‌های فیزیک کوانتوم استفاده می‌شود.'],
+[38,'Sr','Strontium','استرانسیم',87.62,'ae',5,2,'[Kr] 5s2',0.95,1050,1655,2.64,'s','1790','آدر کروفورد','استرانسیم رنگ قرمز درخشان فشفشه‌ها و آتش‌بازی را ایجاد می‌کند. ایزوتوپ استرانسیم-۹۰ در برخی ژنراتورهای حرارتی رادیوایزوتوپی و کربنات استرانسیم در برخی خمیردندان‌های ضدحساسیت کاربرد دارد.'],
+[39,'Y','Yttrium','ایتریم',88.906,'tm',5,3,'[Kr] 4d1 5s2',1.22,1799,3609,4.47,'s','1794','یوهان گادولین','ایتریم در گارنت ایتریم-آلومینیوم (YAG) برای لیزرهای صنعتی و پزشکی، در فسفر قرمز صفحه‌نمایش‌های قدیمی CRT، و در ابررساناهای دمای بالا کاربرد دارد.'],
+[40,'Zr','Zirconium','زیرکونیم',91.224,'tm',5,4,'[Kr] 4d2 5s2',1.33,2128,4682,6.52,'s','1789','مارتین کلاپروت','زیرکونیم به دلیل مقاومت بالا در برابر خوردگی و جذب کم نوترون، برای پوشش میله‌های سوخت راکتورهای هسته‌ای آب سبک استفاده می‌شود. زیرکونیای مکعبی نیز جایگزین ارزان الماس در جواهرات است.'],
+[41,'Nb','Niobium','نیوبیم',92.906,'tm',5,5,'[Kr] 4d4 5s1',1.6,2750,5017,8.57,'s','1801','چارلز هچت','نیوبیم در آلیاژهای فولاد استحکام‌بالا برای لوله‌های نفت و گاز، و در سیم‌پیچ‌های ابررسانای آهنرباهای دستگاه MRI و شتاب‌دهنده‌های ذرات کاربرد دارد.'],
+[42,'Mo','Molybdenum','مولیبدن',95.95,'tm',5,6,'[Kr] 4d5 5s1',2.16,2896,4912,10.28,'s','1781','کارل شیله','مولیبدن به فولادهای ابزار و لوله‌های فشار بالا مقاومت حرارتی و استحکام می‌بخشد؛ آنزیم‌های گیاهی برای تثبیت نیتروژن نیز به مولیبدن نیاز دارند.'],
+[43,'Tc','Technetium','تکنسیم',98,'tm',5,7,'[Kr] 4d5 5s2',1.9,2430,4538,11.0,'s','1937','سگره و پریه','تکنسیوم نخستین عنصر مصنوعی جهان بود که در سال ۱۹۳۷ در آزمایشگاه ساخته شد و هیچ ایزوتوپ پایداری ندارد. ایزوتوپ تکنسیوم-۹۹m پرکاربردترین ماده رادیواکتیو در تصویربرداری پزشکی هسته‌ای است.'],
+[44,'Ru','Ruthenium','روتنیم',101.07,'tm',5,8,'[Kr] 4d7 5s1',2.2,2607,4423,12.45,'s','1844','کارل کلاوس','روتنیم در تماس‌های الکتریکی سخت برای افزایش عمر کلیدها و کانکتورها، و به‌عنوان کاتالیزور در برخی واکنش‌های شیمی صنعتی و سلول‌های خورشیدی رنگدانه‌ای کاربرد دارد.'],
+[45,'Rh','Rhodium','رودیم',102.91,'tm',5,9,'[Kr] 4d8 5s1',2.28,2237,3968,12.41,'s','1803','ویلیام ولاستون','رودیم گران‌ترین فلز رایج در بازار است و پوشش انعکاسی آن روی جواهرات نقره سفید به کار می‌رود؛ عمده مصرف آن در مبدل‌های کاتالیزوری خودرو برای کاهش آلاینده‌های اگزوز است.'],
+[46,'Pd','Palladium','پالادیم',106.42,'tm',5,10,'[Kr] 4d10',2.20,1828,3236,12.02,'s','1803','ویلیام ولاستون','پالادیم مانند رودیم در مبدل‌های کاتالیزوری خودرو برای تبدیل گازهای سمی اگزوز به مواد کم‌خطرتر کاربرد دارد؛ در جواهرات طلای سفید و لحیم‌های الکترونیکی نیز استفاده می‌شود.'],
+[47,'Ag','Silver','نقره',107.87,'tm',5,11,'[Kr] 4d10 5s1',1.93,1235,2435,10.49,'s','باستان','شناخته‌شده از دیرباز','نقره بهترین رسانای الکتریکی و گرمایی در میان همه فلزات است. در جواهرات، ظروف نقره، تماس‌های الکتریکی، و به دلیل خاصیت ضدباکتریایی در برخی پانسمان‌های زخم کاربرد دارد.'],
+[48,'Cd','Cadmium','کادمیم',112.41,'tm',5,12,'[Kr] 4d10 5s2',1.69,594,1040,8.65,'s','1817','فردریش اشتروماير','کادمیم در باتری‌های نیکل-کادمیم قابل‌شارژ کاربرد داشته اما به دلیل سمیت بالا مصرف آن محدود شده است؛ در رنگدانه‌های زرد و قرمز و برخی سلول‌های خورشیدی نازک‌لایه نیز استفاده می‌شود.'],
+[49,'In','Indium','ایندیم',114.82,'pt',5,13,'[Kr] 4d10 5s2 5p1',1.78,430,2345,7.31,'s','1863','رایش و ریشتر','ایندیم در اکسید ایندیوم قلع (ITO)، لایه نازک شفاف و رسانا که در صفحه‌نمایش‌های لمسی گوشی هوشمند، تلویزیون و پنل‌های خورشیدی کاربرد دارد، استفاده می‌شود.'],
+[50,'Sn','Tin','قلع',118.71,'pt',5,14,'[Kr] 4d10 5s2 5p2',1.96,505,2875,7.31,'s','باستان','شناخته‌شده از دیرباز','قلع از هزاران سال پیش در آلیاژ برنز شناخته می‌شد. امروزه در لحیم‌کاری قطعات الکترونیکی به‌جای سرب سمی و پوشش قوطی‌های کنسرو در برابر زنگ‌زدگی کاربرد دارد.'],
+[51,'Sb','Antimony','آنتیموان',121.76,'mo',5,15,'[Kr] 4d10 5s2 5p3',2.05,904,1860,6.68,'s','باستان','شناخته‌شده از دیرباز','آنتیموان در آلیاژ با سرب برای سخت‌کردن صفحات باتری خودرو، و ترکیبات آن در مواد ضدشعله برای لباس، پلاستیک و کابل‌های الکتریکی کاربرد دارد.'],
+[52,'Te','Tellurium','تلوریم',127.60,'mo',5,16,'[Kr] 4d10 5s2 5p4',2.1,723,1261,6.24,'s','1782','فرانتس مولر','تلوریم در آلیاژ فولاد برای بهبود ماشین‌کاری، و در سلول‌های خورشیدی نازک‌لایه کادمیم-تلوراید، یکی از فناوری‌های پرکاربرد خورشیدی، استفاده می‌شود.'],
+[53,'I','Iodine','ید',126.90,'hal',5,17,'[Kr] 4d10 5s2 5p5',2.66,387,457,4.93,'s','1811','برنارد کورتوا','ید برای تولید هورمون تیروئید ضروری است و کمبود آن باعث گواتر می‌شود، به همین دلیل به نمک خوراکی افزوده می‌شود. محلول ید نیز برای ضدعفونی زخم کاربرد دارد.'],
+[54,'Xe','Xenon','زنون',131.29,'ng',5,18,'[Kr] 4d10 5s2 5p6',2.6,161,165,0.005894,'g','1898','رمزی و تراورس','زنون در چراغ‌های فلاش عکاسی و برخی چراغ‌های جلوی خودرو نور سفید درخشانی تولید می‌کند؛ در موتورهای پیشرانه یونی فضاپیماها و بی‌هوشی پزشکی تجربی نیز کاربرد دارد.'],
+[55,'Cs','Caesium','سزیم',132.91,'am',6,1,'[Xe] 6s1',0.79,301,944,1.873,'s','1860','بونزن و کیرشهوف','سزیم پایه تعریف رسمی ثانیه در سیستم SI است؛ ساعت اتمی سزیمی دقیق‌ترین ابزار اندازه‌گیری زمان جهان محسوب می‌شود. در حفاری نفت نیز کاربرد دارد.'],
+[56,'Ba','Barium','باریم',137.33,'ae',6,2,'[Xe] 6s2',0.89,1000,2118,3.51,'s','1808','همفری دیوی','باریم سولفات به دلیل کدر بودن در برابر اشعه ایکس، به‌عنوان ماده حاجب در تصویربرداری از دستگاه گوارش خورانده می‌شود؛ ترکیبات دیگر آن رنگ سبز فشفشه‌ها را ایجاد می‌کنند.'],
+[57,'La','Lanthanum','لانتان',138.91,'la',9,3,'[Xe] 5d1 6s2',1.10,1193,3737,6.15,'s','1839','کارل موساندر','لانتانیم در باتری‌های نیکل-متال‌هیدرید خودروهای هیبریدی، لنزهای دوربین با شکست نور بالا، و کاتالیزور کراکینگ نفت در پالایشگاه‌ها کاربرد دارد.'],
+[58,'Ce','Cerium','سریم',140.12,'la',9,4,'[Xe] 4f1 5d1 6s2',1.12,1068,3716,6.77,'s','1803','برزلیوس و کلاپروت','سریم پرمصرف‌ترین عنصر خاکی کمیاب است؛ در سنگ‌چخماق فندک، پولیش شیشه و لنز، و کاتالیزور مبدل خودرو برای کاهش آلایندگی کاربرد دارد.'],
+[59,'Pr','Praseodymium','پرازئودیمیم',140.91,'la',9,5,'[Xe] 4f3 6s2',1.13,1208,3403,6.77,'s','1885','کارل فون ولسباخ','پرازئودیمیم رنگ سبز-زرد در شیشه و لعاب سرامیک ایجاد می‌کند و در آهنرباهای قوی نئودیمیم-پرازئودیمیم برای موتورهای الکتریکی کاربرد دارد.'],
+[60,'Nd','Neodymium','نئودیمیم',144.24,'la',9,6,'[Xe] 4f4 6s2',1.14,1297,3347,7.01,'s','1885','کارل فون ولسباخ','نئودیمیم در قدرتمندترین آهنرباهای دائمی تجاری (نئودیمیم-آهن-بور) به کار می‌رود که در هارددیسک، توربین بادی و موتور خودروی برقی حضور دارند؛ در لیزرهای Nd:YAG صنعتی و پزشکی نیز کاربرد دارد.'],
+[61,'Pm','Promethium','پرومتیم',145,'la',9,7,'[Xe] 4f5 6s2',1.13,1315,3273,7.26,'s','1945','مارینسکی و گلندنین','پرومتیم تنها لانتانید بدون ایزوتوپ پایدار است و رادیواکتیو بودنش مانع از کاربرد گسترده آن شده؛ در برخی باتری‌های هسته‌ای کوچک‌مقیاس و ساعت‌های نورافشان قدیمی استفاده شده است.'],
+[62,'Sm','Samarium','ساماریم',150.36,'la',9,8,'[Xe] 4f6 6s2',1.17,1345,2067,7.52,'s','1879','پل لوکوک','ساماریم در آهنرباهای ساماریم-کبالت به کار می‌رود که برخلاف آهنرباهای نئودیمیمی، دمای بالا را بدون افت خاصیت مغناطیسی تحمل می‌کنند و در موتورهای هوافضا کاربرد دارند.'],
+[63,'Eu','Europium','یوروپیم',151.96,'la',9,9,'[Xe] 4f7 6s2',1.2,1099,1802,5.24,'s','1901','اوژن دومارسه','یوروپیم فسفرهای قرمز و آبی صفحه‌نمایش‌ها و لامپ‌های کم‌مصرف را تولید می‌کند و به دلیل واکنش خاص نوری، در جوهر ضدجعل اسکناس یورو نیز کاربرد دارد.'],
+[64,'Gd','Gadolinium','گادولینیم',157.25,'la',9,10,'[Xe] 4f7 5d1 6s2',1.2,1585,3546,7.90,'s','1880','دو ماریناک','گادولینیم در ماده حاجب مغناطیسی تزریقی برای تصویربرداری MRI و در میله‌های کنترل برخی راکتورهای هسته‌ای کاربرد دارد.'],
+[65,'Tb','Terbium','تربیم',158.93,'la',9,11,'[Xe] 4f9 6s2',1.1,1629,3396,8.23,'s','1843','کارل موساندر','تربیم در لامپ‌های فلورسنت کم‌مصرف (نور سبز) و در آلیاژ Terfenol-D که تحت میدان مغناطیسی تغییر شکل می‌دهد، برای حسگرها و محرک‌های دقیق صنعتی، کاربرد دارد.'],
+[66,'Dy','Dysprosium','دیسپروزیم',162.50,'la',9,12,'[Xe] 4f10 6s2',1.22,1680,2840,8.54,'s','1886','پل لوکوک','دیسپروزیم به آهنرباهای نئودیمیمی افزوده می‌شود تا مقاومت آن‌ها در برابر دمای بالا در موتور خودروهای برقی و توربین بادی افزایش یابد.'],
+[67,'Ho','Holmium','هولمیم',164.93,'la',9,13,'[Xe] 4f11 6s2',1.23,1734,2993,8.79,'s','1878','دلافونتین و سوره','هولمیم قوی‌ترین گشتاور مغناطیسی را در میان عناصر طبیعی دارد و در آهنرباهای بسیار قوی آزمایشگاهی و برخی لیزرهای پزشکی جراحی کاربرد دارد.'],
+[68,'Er','Erbium','اربیم',167.26,'la',9,14,'[Xe] 4f12 6s2',1.24,1802,3141,9.07,'s','1843','کارل موساندر','اربیم در فیبرهای نوری تقویت‌شده با اربیم (EDFA)، فناوری کلیدی اینترنت پرسرعت جهانی برای تقویت سیگنال نوری در کابل‌های زیردریایی، کاربرد دارد.'],
+[69,'Tm','Thulium','تولیم',168.93,'la',9,15,'[Xe] 4f13 6s2',1.25,1818,2223,9.32,'s','1879','پر کلوه','تولیم کمیاب‌ترین لانتانید پایدار طبیعی است و در دستگاه‌های اشعه ایکس قابل‌حمل برای کاربردهای پزشکی و صنعتی در مناطق دورافتاده کاربرد دارد.'],
+[70,'Yb','Ytterbium','ایتربیم',173.05,'la',9,16,'[Xe] 4f14 6s2',1.1,1097,1469,6.90,'s','1878','دو ماریناک','ایتربیم در ساعت‌های اتمی نسل جدید، دقیق‌تر از سزیم، برخی لیزرهای فیبری صنعتی، و به‌عنوان عامل کاهنده در برخی آلیاژهای فولاد ضدزنگ کاربرد دارد.'],
+[71,'Lu','Lutetium','لوتسیم',174.97,'la',9,17,'[Xe] 4f14 5d1 6s2',1.27,1925,3675,9.84,'s','1907','ژرژ اوربن','لوتتیم در اسکنرهای PET پزشکی به‌عنوان کریستال سنتیلاتور برای تشخیص سرطان و در برخی داروهای پرتودرمانی سرطان کاربرد دارد.'],
+[72,'Hf','Hafnium','هافنیم',178.49,'tm',6,4,'[Xe] 4f14 5d2 6s2',1.3,2506,4876,13.31,'s','1923','کاستر و هوسویی','هافنیوم به دلیل جذب بالای نوترون، در میله‌های کنترل راکتورهای هسته‌ای زیردریایی‌های اتمی کاربرد دارد؛ در ترانزیستورهای نیمه‌هادی مدرن نیز استفاده می‌شود.'],
+[73,'Ta','Tantalum','تانتالم',180.95,'tm',6,5,'[Xe] 4f14 5d3 6s2',1.5,3290,5731,16.65,'s','1802','آندرس اکبرگ','تانتالیوم در خازن‌های تانتالیومی کوچک و قابل‌اعتماد گوشی‌های هوشمند و لپ‌تاپ، و به دلیل سازگاری زیستی بالا در ایمپلنت‌های جراحی کاربرد دارد.'],
+[74,'W','Tungsten','تنگستن',183.84,'tm',6,6,'[Xe] 4f14 5d4 6s2',2.36,3695,5828,19.25,'s','1783','برادران الوئار','تنگستن بالاترین نقطه ذوب فلزات را دارد و در رشته لامپ‌های ژنراتور نور، الکترودهای جوشکاری، و گلوله‌های سنگین ضدزره کاربرد دارد.'],
+[75,'Re','Rhenium','رنیم',186.21,'tm',6,7,'[Xe] 4f14 5d5 6s2',1.9,3459,5869,21.02,'s','1925','نودک، تاکه و برگ','رنیم یکی از کمیاب‌ترین عناصر پوسته زمین است و به آلیاژهای نیکل در پره‌های توربین موتور جت مقاومت حرارتی فوق‌العاده می‌بخشد.'],
+[76,'Os','Osmium','اسمیم',190.23,'tm',6,8,'[Xe] 4f14 5d6 6s2',2.2,3306,5285,22.59,'s','1803','اسمیتسون تنانت','اسمیم چگال‌ترین عنصر طبیعی شناخته‌شده است؛ در آلیاژ با پلاتین برای نوک قلم‌های گرانبها و برخی سوزن‌های فونوگراف قدیمی کاربرد داشته است.'],
+[77,'Ir','Iridium','ایریدیم',192.22,'tm',6,9,'[Xe] 4f14 5d7 6s2',2.20,2719,4403,22.56,'s','1803','اسمیتسون تنانت','ایریدیم مقاوم‌ترین فلز در برابر خوردگی است؛ استوانه استاندارد کیلوگرم بین‌المللی پیشین از آلیاژ پلاتین-ایریدیم ساخته شده بود و در نوک خودکار نیز کاربرد دارد.'],
+[78,'Pt','Platinum','پلاتین',195.08,'tm',6,10,'[Xe] 4f14 5d9 6s1',2.28,2041,4098,21.45,'s','باستان','شناخته‌شده از دیرباز','پلاتین در مبدل‌های کاتالیزوری خودرو، جواهرات لوکس، شیمی‌درمانی سرطان (سیس‌پلاتین) و الکترودهای پیل سوختی هیدروژنی کاربرد دارد.'],
+[79,'Au','Gold','طلا',196.97,'tm',6,11,'[Xe] 4f14 5d10 6s1',2.54,1337,3129,19.30,'s','باستان','شناخته‌شده از دیرباز','طلا هزاران سال نماد ثروت بوده و به دلیل رسانایی و مقاومت در برابر خوردگی، در اتصالات الکترونیکی حساس، دندان‌پزشکی و پوشش محافظ ماهواره‌ها در برابر تابش نیز کاربرد دارد.'],
+[80,'Hg','Mercury','جیوه',200.59,'tm',6,12,'[Xe] 4f14 5d10 6s2',2.00,234,630,13.53,'l','باستان','شناخته‌شده از دیرباز','جیوه تنها فلز مایع در دمای اتاق است و در دماسنج‌ها و فشارسنج‌های قدیمی، لامپ‌های فلورسنت (مقدار کم) و در گذشته در آمالگام دندان‌پزشکی کاربرد داشته است.'],
+[81,'Tl','Thallium','تالیم',204.38,'pt',6,13,'[Xe] 4f14 5d10 6s2 6p1',1.62,577,1746,11.85,'s','1861','ویلیام کروکس','تالیم بسیار سمی است و در گذشته به‌عنوان سم موش و حشره کاربرد داشت؛ امروزه در برخی آشکارسازهای مادون‌قرمز و شیشه‌های با ضریب شکست بالا کاربرد دارد.'],
+[82,'Pb','Lead','سرب',207.2,'pt',6,14,'[Xe] 4f14 5d10 6s2 6p2',1.87,600,2022,11.34,'s','باستان','شناخته‌شده از دیرباز','سرب هزاران سال در لوله‌کشی روم باستان کاربرد داشت؛ امروزه به دلیل سمیت مصرفش محدود شده اما هنوز در باتری‌های اسیدی-سربی خودرو و محافظ در برابر اشعه ایکس کاربرد دارد.'],
+[83,'Bi','Bismuth','بیسموت',208.98,'pt',6,15,'[Xe] 4f14 5d10 6s2 6p3',2.02,544,1837,9.78,'s','1753','کلود ژفروی','بیسموت کمترین سمیت را در میان فلزات سنگین دارد و در داروهای معده (بیسموت ساب‌سالیسیلات) و به‌عنوان جایگزین غیرسمی سرب در ساچمه شکار و لحیم کاربرد دارد.'],
+[84,'Po','Polonium','پولونیم',209,'pt',6,16,'[Xe] 4f14 5d10 6s2 6p4',2.0,527,1235,9.32,'s','1898','ماری و پیر کوری','پولونیوم را ماری و پیر کوری کشف و به افتخار زادگاه ماری، لهستان، نام‌گذاری کردند. به‌شدت رادیواکتیو است و در گذشته در برخی ژنراتورهای حرارتی فضاپیما کاربرد داشته است.'],
+[85,'At','Astatine','استاتین',210,'hal',6,17,'[Xe] 4f14 5d10 6s2 6p5',2.2,575,610,null,'s','1940','کورسون، مکنزی و سگره','استاتین کمیاب‌ترین عنصر طبیعی زمین است؛ کل مقدار آن در پوسته زمین کمتر از یک گرم تخمین زده می‌شود و عمدتاً موضوع پژوهش‌های پرتودرمانی سرطان است.'],
+[86,'Rn','Radon','رادون',222,'ng',6,18,'[Xe] 4f14 5d10 6s2 6p6',2.2,202,211,0.00973,'g','1900','فردریش دورن','رادون گازی رادیواکتیو طبیعی است که از واپاشی اورانیوم در خاک و سنگ خارج می‌شود و می‌تواند در زیرزمین ساختمان‌ها تجمع یابد؛ دومین عامل شایع سرطان ریه پس از سیگار شناخته شده است.'],
+[87,'Fr','Francium','فرانسیم',223,'am',7,1,'[Rn] 7s1',0.7,300,950,null,'s','1939','مارگاریت پره','فرانسیم ناپایدارترین عنصر طبیعی است و عمر متوسط اتم‌هایش تنها چند دقیقه است؛ به دلیل کمیابی شدید، کاربرد عملی ندارد و عمدتاً در پژوهش‌های فیزیک اتمی مطالعه می‌شود.'],
+[88,'Ra','Radium','رادیم',226,'ae',7,2,'[Rn] 7s2',0.9,973,2010,5.5,'s','1898','ماری و پیر کوری','رادیم را ماری و پیر کوری در سال ۱۸۹۸ کشف کردند و زمانی در رنگ‌های شب‌نمای صفحه ساعت به کار می‌رفت، اما به دلیل خطر شدید رادیواکتیویته این کاربرد متوقف شد.'],
+[89,'Ac','Actinium','اکتینیم',227,'ac',10,3,'[Rn] 6d1 7s2',1.1,1500,3200,10.07,'s','1899','آندره دبیرن','اکتینیم نام خود را به کل سری اکتینیدها داده است؛ به‌شدت رادیواکتیو است و کاربرد آن عمدتاً در پژوهش و برخی درمان‌های سرطان هدفمند با پرتو آلفا محدود شده است.'],
+[90,'Th','Thorium','توریم',232.04,'ac',10,4,'[Rn] 6d2 7s2',1.3,2115,5061,11.72,'s','1829','یونس برزلیوس','توریم فراوان‌تر از اورانیوم در پوسته زمین است و به‌عنوان سوخت جایگزین راکتورهای هسته‌ای نسل آینده مورد پژوهش قرار دارد؛ در گذشته در توری لامپ‌های گازی روشنایی کاربرد داشت.'],
+[91,'Pa','Protactinium','پروتاکتینیم',231.04,'ac',10,5,'[Rn] 5f2 6d1 7s2',1.5,1841,4300,15.37,'s','1913','فایانس و گورینگ','پروتاکتینیم یکی از کمیاب‌ترین و گران‌ترین عناصر طبیعی است؛ به دلیل رادیواکتیویته شدید و کمیابی، کاربرد عملی ندارد و صرفاً در پژوهش‌های هسته‌ای مطالعه می‌شود.'],
+[92,'U','Uranium','اورانیم',238.03,'ac',10,6,'[Rn] 5f3 6d1 7s2',1.38,1405,4404,19.1,'s','1789','مارتین کلاپروت','اورانیوم سوخت اصلی نیروگاه‌های هسته‌ای جهان و سلاح‌های اتمی است؛ اورانیوم رقیق‌شده نیز به دلیل چگالی بالا در زره‌های نظامی و ضدوزنه هواپیما کاربرد دارد.'],
+[93,'Np','Neptunium','نپتونیم',237,'ac',10,7,'[Rn] 5f4 6d1 7s2',1.36,917,4273,20.45,'s','1940','مک‌میلان و ابلسون','نپتونیوم اولین عنصر ماوراء اورانیوم بود که در آزمایشگاه ساخته شد؛ کاربرد آن محدود به پژوهش‌های هسته‌ای و برخی آشکارسازهای نوترون است.'],
+[94,'Pu','Plutonium','پلوتونیم',244,'ac',10,8,'[Rn] 5f6 7s2',1.28,913,3501,19.85,'s','1940','گلن سیبورگ','پلوتونیوم در بمب هسته‌ای ناکازاکی و در ژنراتورهای حرارتی رادیوایزوتوپی فضاپیماهای دوربرد، مانند کاوشگرهای ویجر و کنجکاوی مریخ که نور خورشید کافی به آن‌ها نمی‌رسد، کاربرد دارد.'],
+[95,'Am','Americium','امریسیم',243,'ac',10,9,'[Rn] 5f7 7s2',1.3,1449,2880,12.0,'s','1944','گلن سیبورگ','امریسیم در بیشتر حسگرهای دود خانگی، به‌عنوان منبع کوچک پرتو آلفا برای یونیزه‌کردن هوا، کاربرد دارد و پرکاربردترین عنصر مصنوعی در وسایل روزمره محسوب می‌شود.'],
+[96,'Cm','Curium','کوریم',247,'ac',10,10,'[Rn] 5f7 6d1 7s2',1.3,1613,3383,13.51,'s','1944','گلن سیبورگ','کوریم به افتخار ماری و پیر کوری نام‌گذاری شده و در برخی طیف‌سنج‌های ذرات آلفای فضاپیماهای کاوشگر مریخ برای تحلیل ترکیب خاک کاربرد داشته است.'],
+[97,'Bk','Berkelium','برکلیم',247,'ac',10,11,'[Rn] 5f9 7s2',1.3,1259,2900,14.78,'s','1949','گلن سیبورگ','برکلیم به افتخار دانشگاه کالیفرنیا در برکلی، محل کشف، نام‌گذاری شده و کاربرد آن کاملاً محدود به پژوهش‌های هسته‌ای پایه است.'],
+[98,'Cf','Californium','کالیفرنیم',251,'ac',10,12,'[Rn] 5f10 7s2',1.3,1173,1743,15.1,'s','1950','گلن سیبورگ','کالیفرنیم منبع نوترون قوی تولید می‌کند و در دستگاه‌های تصویربرداری نوترونی صنعتی برای بازرسی جوش و مواد، و درمان برخی سرطان‌ها با نوترون‌درمانی کاربرد دارد.'],
+[99,'Es','Einsteinium','اینشتینیم',252,'ac',10,13,'[Rn] 5f11 7s2',1.3,1133,null,8.84,'s','1952','تیم آزمایش آیوی مایک','اینشتینیم برای اولین بار در بقایای اولین آزمایش بمب هیدروژنی (آیوی مایک) در سال ۱۹۵۲ کشف شد و کاربرد آن کاملاً محدود به پژوهش است.'],
+[100,'Fm','Fermium','فرمیم',257,'ac',10,14,'[Rn] 5f12 7s2',1.3,1800,null,null,'s','1952','تیم آزمایش آیوی مایک','فرمیم به افتخار انریکو فرمی، پدر راکتور هسته‌ای، نام‌گذاری شده و مانند اینشتینیم، ابتدا در بقایای آزمایش هسته‌ای شناسایی شد؛ کاربردی جز پژوهش ندارد.'],
+[101,'Md','Mendelevium','مندلویم',258,'ac',10,15,'[Rn] 5f13 7s2',1.3,1100,null,null,'s','1955','گلن سیبورگ','مندلویم به افتخار دیمیتری مندلیف، خالق جدول تناوبی، نام‌گذاری شده است؛ تنها چند اتم از آن در هر زمان قابل تولید است و کاربردی جز پژوهش پایه ندارد.'],
+[102,'No','Nobelium','نوبلیم',259,'ac',10,16,'[Rn] 5f14 7s2',1.3,1100,null,null,'s','1966','دوبنا و برکلی','نوبلیم به افتخار آلفرد نوبل نام‌گذاری شده؛ رادیواکتیویته شدید و عمر کوتاهش مانع از هرگونه کاربرد عملی شده است.'],
+[103,'Lr','Lawrencium','لورنسیم',266,'ac',10,17,'[Rn] 5f14 7s2 7p1',null,1900,null,null,'s','1961','دانشگاه برکلی','لارنسیم آخرین عضو سری اکتینیدها و به افتخار ارنست لارنس، مخترع سیکلوترون، نام‌گذاری شده است؛ فقط چند اتم از آن در هر آزمایش تولید می‌شود.'],
+[104,'Rf','Rutherfordium','رادرفوردیم',267,'tm',7,4,'[Rn] 5f14 6d2 7s2',null,2400,5800,23.2,'s','1964','دوبنا و برکلی','رادرفوردیم به افتخار ارنست رادرفورد، پدر فیزیک هسته‌ای، نام‌گذاری شده و نخستین عنصر ماورای اکتینیدهاست؛ عمر آن تنها چند ثانیه است.'],
+[105,'Db','Dubnium','دابنیم',268,'tm',7,5,'[Rn] 5f14 6d3 7s2',null,null,null,29.3,'s','1967','دوبنا و برکلی','دابنیم به افتخار شهر دوبنای روسیه، محل آزمایشگاه کاشف، نام‌گذاری شده و مانند دیگر عناصر فراسنگین، تنها چند اتم از آن در هر بار تولید و به‌سرعت واپاشی می‌شود.'],
+[106,'Sg','Seaborgium','سیبورگیم',269,'tm',7,6,'[Rn] 5f14 6d4 7s2',null,null,null,35.0,'s','1974','برکلی','سیبورگیم به افتخار گلن سیبورگ، کاشف چندین عنصر ماوراء اورانیوم، نام‌گذاری شده؛ او تنها دانشمندی است که یک عنصر در زمان حیاتش به نامش نام‌گذاری شد.'],
+[107,'Bh','Bohrium','بوریم',270,'tm',7,7,'[Rn] 5f14 6d5 7s2',null,null,null,37.1,'s','1981','دارمشتات','بوریم به افتخار نیلز بور، فیزیک‌دان بزرگ دانمارکی، نام‌گذاری شده و در آزمایشگاه GSI آلمان کشف شد.'],
+[108,'Hs','Hassium','هاسیم',269,'tm',7,8,'[Rn] 5f14 6d6 7s2',null,null,null,40.7,'s','1984','دارمشتات','هاسیم نامش را از ایالت هسن آلمان، محل کشف در دارمشتات، گرفته است.'],
+[109,'Mt','Meitnerium','میتنریم',278,'un',7,9,'[Rn] 5f14 6d7 7s2',null,null,null,null,'s','1982','دارمشتات','میتنریم به افتخار لیزه ماینتنر، فیزیک‌دانی که در کشف شکافت هسته‌ای نقش کلیدی داشت اما جایزه نوبل به او تعلق نگرفت، نام‌گذاری شده است.'],
+[110,'Ds','Darmstadtium','دارمشتاتیم',281,'un',7,10,'[Rn] 5f14 6d8 7s2',null,null,null,null,'s','1994','دارمشتات','دارمشتاتیم نامش را از شهر دارمشتات آلمان، محل آزمایشگاه GSI که اغلب عناصر فراسنگین را کشف کرده، گرفته است.'],
+[111,'Rg','Roentgenium','رونتگنیم',282,'un',7,11,'[Rn] 5f14 6d9 7s2',null,null,null,null,'s','1994','دارمشتات','رونتگنیم به افتخار ویلهلم رونتگن، کاشف اشعه ایکس و برنده نخستین جایزه نوبل فیزیک، نام‌گذاری شده است.'],
+[112,'Cn','Copernicium','کوپرنیسیم',285,'tm',7,12,'[Rn] 5f14 6d10 7s2',null,null,357,null,'g','1996','دارمشتات','کوپرنیسیم به افتخار نیکلاس کوپرنیک، ستاره‌شناسی که مدل خورشیدمرکزی منظومه شمسی را مطرح کرد، نام‌گذاری شده و پیش‌بینی می‌شود در دمای اتاق رفتاری شبیه گاز داشته باشد.'],
+[113,'Nh','Nihonium','نیهونیم',286,'pt',7,13,'[Rn] 5f14 6d10 7s2 7p1',null,700,1400,null,'s','2004','ریکن ژاپن','نیهونیم را دانشمندان ژاپنی در مؤسسه ریکن کشف کردند و نامش، «نیهون» به معنای ژاپن، نخستین عنصر نام‌گذاری‌شده توسط یک کشور آسیایی است.'],
+[114,'Fl','Flerovium','فلروویم',289,'pt',7,14,'[Rn] 5f14 6d10 7s2 7p2',null,200,380,null,'g','1998','دوبنا','فلروویم به افتخار آزمایشگاه واکنش‌های هسته‌ای فلروف در روسیه نام‌گذاری شده و برخی پیش‌بینی‌های نظری آن را نزدیک به یک «جزیره پایداری» فرضی در میان عناصر فراسنگین می‌دانند.'],
+[115,'Mc','Moscovium','مسکوویم',290,'pt',7,15,'[Rn] 5f14 6d10 7s2 7p3',null,700,1400,null,'s','2003','دوبنا','مسکوویم به افتخار استان مسکو، محل آزمایشگاه دوبنا در روسیه، نام‌گذاری شده است.'],
+[116,'Lv','Livermorium','لیورموریم',293,'pt',7,16,'[Rn] 5f14 6d10 7s2 7p4',null,700,1100,null,'s','2000','دوبنا و لیورمور','لیورموریم به افتخار آزمایشگاه ملی لارنس-لیورمور در آمریکا، که در کشف مشارکت داشت، نام‌گذاری شده است.'],
+[117,'Ts','Tennessine','تنسین',294,'hal',7,17,'[Rn] 5f14 6d10 7s2 7p5',null,700,883,null,'s','2010','دوبنا و اوک‌ریج','تنسین به افتخار ایالت تنسی آمریکا، محل چند آزمایشگاه مشارکت‌کننده در کشف از جمله آزمایشگاه ملی اوک‌ریج، نام‌گذاری شده و سنگین‌ترین هالوژن شناخته‌شده است.'],
+[118,'Og','Oganesson','اوگانسون',294,'ng',7,18,'[Rn] 5f14 6d10 7s2 7p6',null,null,null,null,'s','2002','دوبنا','اوگانسون به افتخار یوری اوگانسیان، دانشمند برجسته روسی در زمینه سنتز عناصر فراسنگین، نام‌گذاری شده و سنگین‌ترین عنصر کشف‌شده تا امروز است.']
+];
+
+const KEYS=['z','sym','en','fa','mass','cat','row','col','ec','eneg','mp','bp','dens','state','year','disc','note'];
+const DATA = RAW.map(r=>{const o={};KEYS.forEach((k,i)=>o[k]=r[i]);return o;});
+
+const OX = {
+1:[1,-1],2:[],3:[1],4:[2],5:[3],6:[-4,2,4],7:[-3,1,2,3,4,5],8:[-2,-1,2],9:[-1],10:[],
+11:[1],12:[2],13:[3],14:[-4,4],15:[-3,3,5],16:[-2,4,6],17:[-1,1,3,5,7],18:[],
+19:[1],20:[2],21:[3],22:[2,3,4],23:[2,3,4,5],24:[2,3,6],25:[2,3,4,6,7],26:[2,3],27:[2,3],28:[2,3],29:[1,2],30:[2],
+31:[3],32:[2,4],33:[-3,3,5],34:[-2,4,6],35:[-1,1,3,5,7],36:[2],
+37:[1],38:[2],39:[3],40:[4],41:[3,5],42:[2,3,4,5,6],43:[4,7],44:[2,3,4,6,8],45:[2,3,4],46:[2,4],47:[1],48:[2],
+49:[3],50:[2,4],51:[-3,3,5],52:[-2,4,6],53:[-1,1,3,5,7],54:[2,4,6],
+55:[1],56:[2],57:[3],58:[3,4],59:[3],60:[3],61:[3],62:[2,3],63:[2,3],64:[3],65:[3],66:[3],67:[3],68:[3],69:[3],70:[2,3],71:[3],
+72:[4],73:[5],74:[4,6],75:[4,7],76:[3,4,8],77:[3,4],78:[2,4],79:[1,3],80:[1,2],81:[1,3],82:[2,4],83:[3,5],84:[2,4],85:[-1,1],86:[2],
+87:[1],88:[2],89:[3],90:[4],91:[5],92:[4,6],93:[5],94:[4],95:[3],96:[3],97:[3],98:[3],99:[3],100:[3],101:[2,3],102:[2,3],103:[3],
+104:[4],105:[5],106:[6],107:[7],108:[8],109:[],110:[],111:[],112:[2],113:[1,3],114:[2],115:[1,3],116:[2,4],117:[-1,1,3],118:[]
+};
+const FORMULA = {
+1:'H₂',2:'He',3:'Li',4:'Be',5:'B',6:'C',7:'N₂',8:'O₂',9:'F₂',10:'Ne',
+11:'Na',12:'Mg',13:'Al',14:'Si',15:'P₄',16:'S₈',17:'Cl₂',18:'Ar',
+19:'K',20:'Ca',21:'Sc',22:'Ti',23:'V',24:'Cr',25:'Mn',26:'Fe',27:'Co',28:'Ni',29:'Cu',30:'Zn',
+31:'Ga',32:'Ge',33:'As',34:'Se₈',35:'Br₂',36:'Kr',
+37:'Rb',38:'Sr',39:'Y',40:'Zr',41:'Nb',42:'Mo',43:'Tc',44:'Ru',45:'Rh',46:'Pd',47:'Ag',48:'Cd',
+49:'In',50:'Sn',51:'Sb',52:'Te',53:'I₂',54:'Xe',
+55:'Cs',56:'Ba',57:'La',58:'Ce',59:'Pr',60:'Nd',61:'Pm',62:'Sm',63:'Eu',64:'Gd',65:'Tb',66:'Dy',67:'Ho',68:'Er',69:'Tm',70:'Yb',71:'Lu',
+72:'Hf',73:'Ta',74:'W',75:'Re',76:'Os',77:'Ir',78:'Pt',79:'Au',80:'Hg',81:'Tl',82:'Pb',83:'Bi',84:'Po',85:'At',86:'Rn',
+87:'Fr',88:'Ra',89:'Ac',90:'Th',91:'Pa',92:'U',93:'Np',94:'Pu',95:'Am',96:'Cm',97:'Bk',98:'Cf',99:'Es',100:'Fm',101:'Md',102:'No',103:'Lr',
+104:'Rf',105:'Db',106:'Sg',107:'Bh',108:'Hs',109:'Mt',110:'Ds',111:'Rg',112:'Cn',113:'Nh',114:'Fl',115:'Mc',116:'Lv',117:'Ts',118:'Og'
+};
+DATA.forEach(d=>{ d.ox = OX[d.z]||[]; d.formula = FORMULA[d.z]||d.sym; });
+
+/* Empirical atomic radius (pm) — Slater/empirical reference values. Null where not reliably measured. */
+const RADIUS = {
+1:25,2:120,3:145,4:105,5:85,6:70,7:65,8:60,9:50,10:38,
+11:180,12:150,13:125,14:110,15:100,16:100,17:100,18:71,
+19:220,20:180,21:160,22:140,23:135,24:140,25:140,26:140,27:135,28:135,29:135,30:135,31:130,32:125,33:115,34:115,35:115,36:88,
+37:235,38:200,39:180,40:155,41:145,42:145,43:135,44:130,45:135,46:140,47:160,48:155,49:155,50:145,51:145,52:140,53:140,54:108,
+55:260,56:215,57:195,58:185,59:185,60:185,61:185,62:185,63:185,64:180,65:175,66:175,67:175,68:175,69:175,70:175,71:175,
+72:155,73:145,74:135,75:135,76:130,77:135,78:135,79:135,80:150,81:190,82:180,83:160,84:190,
+89:195,90:180,91:180,92:175,93:175,94:175,95:175
+};
+/* First ionization energy (kJ/mol) — standard reference values. */
+const IE1 = {
+1:1312,2:2372,3:520,4:899,5:801,6:1086,7:1402,8:1314,9:1681,10:2081,
+11:496,12:738,13:577,14:786,15:1012,16:1000,17:1251,18:1521,
+19:419,20:590,21:633,22:659,23:651,24:653,25:717,26:762,27:760,28:737,29:745,30:906,
+31:579,32:762,33:947,34:941,35:1140,36:1351,
+37:403,38:549,39:600,40:640,41:652,42:684,43:702,44:710,45:720,46:804,47:731,48:868,
+49:558,50:709,51:834,52:869,53:1008,54:1170,
+55:376,56:503,57:538,58:534,59:527,60:533,61:540,62:545,63:547,64:593,65:566,66:573,67:581,68:589,69:597,70:603,71:524,
+72:659,73:761,74:770,75:760,76:840,77:880,78:870,79:890,80:1007,
+81:589,82:716,83:703,84:812,85:920,86:1037,
+87:380,88:509,89:499,90:587,91:568,92:598,93:605,94:585,95:578,96:581,97:601,98:608,99:619,100:627,101:635,102:642,103:470
+};
+/* Electron affinity (kJ/mol) — 0 marks negligible/unstable-anion elements (e.g. noble gases). */
+const EA = {
+1:73,2:0,3:60,4:0,5:27,6:122,7:0,8:141,9:328,10:0,
+11:53,12:0,13:43,14:134,15:72,16:200,17:349,18:0,
+19:48,20:2,21:18,22:8,23:51,24:65,25:0,26:16,27:64,28:112,29:118,30:0,
+31:29,32:119,33:78,34:195,35:325,36:0,
+37:47,38:5,39:30,40:41,41:86,42:72,43:53,44:101,45:110,46:54,47:126,48:0,
+49:29,50:107,51:101,52:190,53:295,54:0,
+55:46,56:14,72:0,73:31,74:79,75:14,76:106,77:151,78:205,79:223,80:0,
+81:20,82:35,83:91,84:136,85:233,86:0
+};
+/* Crustal abundance (ppm) — approximate Clarke values. 0 marks synthetic/undetected-in-nature elements. */
+const ABUND = {
+1:1400,2:0.008,3:20,4:2.8,5:10,6:200,7:19,8:461000,9:585,10:0.005,
+11:23600,12:23300,13:82300,14:282000,15:1050,16:350,17:145,18:1.2,
+19:20900,20:41500,21:22,22:5650,23:120,24:102,25:950,26:56300,27:25,28:84,29:60,30:70,
+31:19,32:1.5,33:1.8,34:0.05,35:2.4,36:0.0001,
+37:90,38:370,39:33,40:165,41:20,42:1.2,43:0,44:0.001,45:0.001,46:0.015,47:0.075,48:0.15,
+49:0.25,50:2.3,51:0.2,52:0.001,53:0.45,54:0.00003,
+55:3,56:425,57:30,58:66,59:9.2,60:27,61:0,62:7,63:2.1,64:6.2,65:1.2,66:5.2,67:1.3,68:3.5,69:0.52,70:3,71:0.8,
+72:3,73:2,74:1.25,75:0.0007,76:0.0018,77:0.001,78:0.005,79:0.004,80:0.085,
+81:0.85,82:14,83:0.025,84:0,85:0,86:0,
+87:0,88:0.0000009,89:0.00000000055,90:9.6,91:0.0000014,92:2.7,93:0,94:0
+};
+/* Crystal structure at STP — only where well-documented; omitted (null) elsewhere rather than guessed. */
+const CRYSTAL = {
+3:'bcc',4:'hcp',5:'rhomb',6:'hex',11:'bcc',12:'hcp',13:'fcc',14:'diamond',
+19:'bcc',20:'fcc',21:'hcp',22:'hcp',23:'bcc',24:'bcc',25:'cubic',26:'bcc',27:'hcp',28:'fcc',29:'fcc',30:'hcp',31:'ortho',32:'diamond',
+37:'bcc',38:'fcc',39:'hcp',40:'hcp',41:'bcc',42:'bcc',43:'hcp',44:'hcp',45:'fcc',46:'fcc',47:'fcc',48:'hcp',49:'tetra',50:'tetra',
+55:'bcc',56:'bcc',57:'hex',58:'fcc',60:'hex',62:'rhomb',63:'bcc',
+72:'hcp',73:'bcc',74:'bcc',75:'hcp',76:'hcp',77:'fcc',78:'fcc',79:'fcc',80:'rhomb',82:'fcc',83:'rhomb',
+90:'fcc',92:'ortho'
+};
+const CRYSTAL_LABELS = {
+  bcc:{fa:'مکعبی مرکزپر (BCC)', en:'Body-centered cubic (BCC)'},
+  fcc:{fa:'مکعبی وجه‌پر (FCC)', en:'Face-centered cubic (FCC)'},
+  hcp:{fa:'شش‌گوشه فشرده (HCP)', en:'Hexagonal close-packed (HCP)'},
+  diamond:{fa:'الماس‌گونه', en:'Diamond cubic'},
+  hex:{fa:'شش‌گوشه', en:'Hexagonal'},
+  rhomb:{fa:'رومبوهدرال', en:'Rhombohedral'},
+  tetra:{fa:'چهارگوشی', en:'Tetragonal'},
+  ortho:{fa:'اورترومبیک', en:'Orthorhombic'},
+  cubic:{fa:'مکعبی پیچیده', en:'Complex cubic'}
+};
+DATA.forEach(d=>{
+  d.radius = RADIUS[d.z] ?? null;
+  d.ie1 = IE1[d.z] ?? null;
+  d.ea = EA[d.z] ?? null;
+  d.abund = ABUND[d.z] ?? null;
+  d.crystal = CRYSTAL[d.z] ?? null;
+});
+function fmtAbund(v){
+  if(v===null||v===undefined) return lang==='fa'?'نامشخص':'unknown';
+  if(v===0) return lang==='fa'?'طبیعتاً یافت نمی‌شود (مصنوعی)':'not found in nature (synthetic)';
+  if(v<0.001) return v.toExponential(1)+' ppm';
+  if(v<1) return v.toFixed(3)+' ppm';
+  return (v>=1000 ? Math.round(v).toLocaleString() : v)+' ppm';
+}
+
+const CATS = {
+  am:{fa:'فلز قلیایی',en:'Alkali metal',color:'var(--am)'},
+  ae:{fa:'فلز قلیایی خاکی',en:'Alkaline earth',color:'var(--ae)'},
+  tm:{fa:'فلز واسطه',en:'Transition metal',color:'var(--tm)'},
+  pt:{fa:'فلز دیگر',en:'Post-transition',color:'var(--pt)'},
+  mo:{fa:'شبه‌فلز',en:'Metalloid',color:'var(--mo)'},
+  nm:{fa:'نافلز',en:'Reactive nonmetal',color:'var(--nm)'},
+  hal:{fa:'هالوژن',en:'Halogen',color:'var(--hal)'},
+  ng:{fa:'گاز نجیب',en:'Noble gas',color:'var(--ng)'},
+  la:{fa:'لانتانید',en:'Lanthanide',color:'var(--la)'},
+  ac:{fa:'اکتینید',en:'Actinide',color:'var(--ac)'},
+  un:{fa:'نامشخص',en:'Unknown',color:'var(--un)'}
+};
+const STATE_FA={s:'جامد',l:'مایع',g:'گاز'};
+const STATE_EN={s:'Solid',l:'Liquid',g:'Gas'};
+
+let lang='fa', activeCats=new Set(Object.keys(CATS)), query='';
+
+/* IUPAC systematic element names for undiscovered elements (real standardized algorithm, IUPAC 1978 recommendations) */
+const SYS_ROOT = {0:'nil',1:'un',2:'bi',3:'tri',4:'quad',5:'pent',6:'hex',7:'sept',8:'oct',9:'enn'};
+const SYS_SYM  = {0:'n',1:'u',2:'b',3:'t',4:'q',5:'p',6:'h',7:'s',8:'o',9:'e'};
+function systematicName(z){
+  const digits = String(z).split('').map(Number);
+  let name = digits.map(d=>SYS_ROOT[d]).join('') + 'ium';
+  name = name.replace(/ii/g,'i').replace(/nnn/g,'nn');
+  name = name[0].toUpperCase()+name.slice(1);
+  const sym = digits.map(d=>SYS_SYM[d]).join('');
+  const symCap = sym[0].toUpperCase()+sym.slice(1);
+  return {name, sym: symCap};
+}
+let favorites=new Set(), viewedHistory=[], viewedSet=new Set(), favOnly=false;
+let activeStates=new Set(['s','l','g']), activeBlocks=new Set(['s','p','d','f']), zFrom=1, zTo=118;
+
+function blockOf(el){
+  if(el.row===9||el.row===10) return 'f';
+  if(el.col<=2) return 's';
+  if(el.col>=3 && el.col<=12) return 'd';
+  return 'p';
+}
+function groupLabel(el){
+  if(el.row===9) return lang==='fa'?'لانتانید':'Lanthanide';
+  if(el.row===10) return lang==='fa'?'اکتینید':'Actinide';
+  return el.col;
+}
+function periodOf(el){ return el.row>8 ? (el.row===9?6:7) : el.row; }
+function kToC(k){ return k==null?null:Math.round((k-273.15)*10)/10; }
+function fmt(v,unit=''){ return (v===null||v===undefined) ? (lang==='fa'?'نامشخص':'unknown') : (v+unit); }
+
+/* ---------- render grid ---------- */
+const grid = document.getElementById('grid');
+function buildGrid(){
+  grid.innerHTML='';
+  for(let r=1;r<=7;r++){
+    for(let c=1;c<=18;c++){
+      if(r>=6 && c===3){
+        const el = DATA.find(d=>d.z === (r===6?71:103));
+        if(el) grid.appendChild(makeCell(el, r, 3));
+        continue;
+      }
+      const el = DATA.find(d=>d.row===r && d.col===c);
+      if(el) grid.appendChild(makeCell(el));
+    }
+  }
+  // spacer row 8
+  const spacer=document.createElement('div');
+  spacer.style.gridRow=8; spacer.style.gridColumn='1/-1'; spacer.style.height='10px';
+  grid.appendChild(spacer);
+  // f-block extension rows (La-Yb / Ac-No) — Lu/Lr already shown in the main body above
+  for(let c=3;c<=16;c++){
+    const el = DATA.find(d=>d.row===9 && d.col===c);
+    if(el) grid.appendChild(makeCell(el));
+  }
+  for(let c=3;c<=16;c++){
+    const el = DATA.find(d=>d.row===10 && d.col===c);
+    if(el) grid.appendChild(makeCell(el));
+  }
+  applyFilters();
+  applyHeatmap();
+  buildPositionMap();
+}
+
+function makeCell(el, rowOverride, colOverride){
+  const div=document.createElement('div');
+  div.className='cell';
+  div.style.gridRow=rowOverride||el.row; div.style.gridColumn=colOverride||el.col;
+  div.style.setProperty('--cc', CATS[el.cat].color);
+  div.dataset.z=el.z;
+  div.setAttribute('role','button');
+  div.setAttribute('tabindex','-1');
+  div.setAttribute('aria-label', `${lang==='fa'?el.fa:el.en}, ${lang==='fa'?'عدد اتمی':'atomic number'} ${el.z}`);
+  if(favorites.has(el.z)) div.classList.add('is-fav');
+  div.innerHTML=`
+    <span class="fav-badge">★</span>
+    <span class="z mono">${el.z}</span>
+    <span class="sym mono">${el.sym}</span>
+    <span class="nm">${lang==='fa'?el.fa:el.en}</span>
+    <span class="tick"></span>
+  `;
+  div.addEventListener('click',()=>openModal(el));
+  div.addEventListener('mouseenter',()=>{
+    const r=parseInt(div.style.gridRow), c=parseInt(div.style.gridColumn);
+    grid.querySelectorAll('.cell').forEach(o=>{
+      const or_=parseInt(o.style.gridRow), oc=parseInt(o.style.gridColumn);
+      if(or_===r) o.classList.add('hl-line');
+      if(oc===c && r<=7 && or_<=7) o.classList.add('hl-line');
+    });
+  });
+  div.addEventListener('mouseleave',()=>{
+    grid.querySelectorAll('.cell.hl-line').forEach(o=>o.classList.remove('hl-line'));
+  });
+  return div;
+}
+
+/* ---------- filters ---------- */
+const filtersRow=document.getElementById('filtersRow');
+function buildFilterChips(){
+  const container = document.getElementById('chipContainer');
+  container.innerHTML = '';
+  Object.keys(CATS).forEach(key=>{
+    const chip=document.createElement('div');
+    chip.className='filter-chip active';
+    chip.style.setProperty('--cat-color', CATS[key].color);
+    chip.innerHTML=`<span class="dot" style="background:${CATS[key].color}"></span><span>${lang==='fa'?CATS[key].fa:CATS[key].en}</span>`;
+    chip.addEventListener('click',()=>{
+      if(activeCats.has(key)){ activeCats.delete(key); chip.classList.remove('active'); }
+      else{ activeCats.add(key); chip.classList.add('active'); }
+      applyFilters();
+    });
+    container.appendChild(chip);
+  });
+}
+
+const STATE_LABELS={s:{fa:'جامد',en:'Solid'}, l:{fa:'مایع',en:'Liquid'}, g:{fa:'گاز',en:'Gas'}};
+function buildStateChips(){
+  const container = document.getElementById('stateContainer');
+  container.innerHTML='';
+  Object.keys(STATE_LABELS).forEach(key=>{
+    const chip=document.createElement('div');
+    chip.className='filter-chip active';
+    chip.innerHTML=`<span>${lang==='fa'?STATE_LABELS[key].fa:STATE_LABELS[key].en}</span>`;
+    chip.addEventListener('click',()=>{
+      if(activeStates.has(key)){ activeStates.delete(key); chip.classList.remove('active'); }
+      else{ activeStates.add(key); chip.classList.add('active'); }
+      applyFilters();
+    });
+    container.appendChild(chip);
+  });
+}
+const BLOCK_LABELS={s:{fa:'بلوک s',en:'Block s',c:'#4dabf7'}, p:{fa:'بلوک p',en:'Block p',c:'#a9e34b'}, d:{fa:'بلوک d',en:'Block d',c:'#ffd43b'}, f:{fa:'بلوک f',en:'Block f',c:'#f783ac'}};
+function buildBlockChips(){
+  const container = document.getElementById('blockContainer');
+  container.innerHTML='';
+  Object.keys(BLOCK_LABELS).forEach(key=>{
+    const chip=document.createElement('div');
+    chip.className='filter-chip active';
+    chip.style.setProperty('--cat-color', BLOCK_LABELS[key].c);
+    chip.innerHTML=`<span class="dot" style="background:${BLOCK_LABELS[key].c}"></span><span>${lang==='fa'?BLOCK_LABELS[key].fa:BLOCK_LABELS[key].en}</span>`;
+    chip.addEventListener('click',()=>{
+      if(activeBlocks.has(key)){ activeBlocks.delete(key); chip.classList.remove('active'); }
+      else{ activeBlocks.add(key); chip.classList.add('active'); }
+      applyFilters();
+    });
+    container.appendChild(chip);
+  });
+}
+
+function applyFilters(){
+  const cells = grid.querySelectorAll('.cell');
+  let anyVisible=false;
+  cells.forEach(c=>{
+    const el = DATA.find(d=>d.z==c.dataset.z);
+    const matchesCat = activeCats.has(el.cat);
+    const matchesState = activeStates.has(el.state);
+    const matchesBlock = activeBlocks.has(blockOf(el));
+    const matchesRange = el.z>=zFrom && el.z<=zTo;
+    const matchesFav = !favOnly || favorites.has(el.z);
+    const q=query.trim().toLowerCase();
+    const matchesQuery = !q || el.fa.includes(query.trim()) || el.en.toLowerCase().includes(q) || el.sym.toLowerCase().includes(q) || String(el.z)===q;
+    const visible = matchesCat && matchesState && matchesBlock && matchesRange && matchesFav && matchesQuery;
+    c.classList.toggle('dim', !visible);
+    c.classList.toggle('hit', q && matchesQuery);
+    if(visible) anyVisible=true;
+  });
+  document.getElementById('emptyMsg').style.display = anyVisible ? 'none':'block';
+}
+
+document.getElementById('searchInput').addEventListener('input',e=>{ query=e.target.value; applyFilters(); });
+document.getElementById('zoomSlider').addEventListener('input',e=>{
+  document.documentElement.style.setProperty('--card-scale', (e.target.value/100));
+});
+document.getElementById('zFrom').addEventListener('input',e=>{ zFrom=Number(e.target.value)||1; applyFilters(); });
+document.getElementById('zTo').addEventListener('input',e=>{ zTo=Number(e.target.value)||118; applyFilters(); });
+
+document.getElementById('randomBtn').addEventListener('click',()=>{
+  const el = DATA[Math.floor(Math.random()*DATA.length)];
+  openModal(el);
+});
+function downloadBlob(filename, content, mime){
+  const blob = new Blob([content], {type:mime});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href=url; a.download=filename; document.body.appendChild(a); a.click();
+  document.body.removeChild(a); URL.revokeObjectURL(url);
+}
+document.getElementById('csvBtn').addEventListener('click',()=>{
+  const cols=['z','sym','en','fa','mass','cat','ec','eneg','mp','bp','dens','state','year','disc','formula'];
+  const rows=[cols.join(',')].concat(DATA.map(d=>cols.map(c=>{
+    let v = d[c]; if(v===null||v===undefined) v='';
+    v=String(v).replace(/"/g,'""');
+    return /[,"\n]/.test(v) ? `"${v}"` : v;
+  }).join(',')));
+  downloadBlob('periodic-table.csv', rows.join('\n'), 'text/csv;charset=utf-8;');
+});
+document.getElementById('jsonBtn').addEventListener('click',()=>{
+  downloadBlob('periodic-table.json', JSON.stringify(DATA, null, 2), 'application/json;charset=utf-8;');
+});
+document.getElementById('xlsxBtn').addEventListener('click',()=>{
+  if(typeof XLSX==='undefined'){
+    alert(lang==='fa'?'کتابخانه Excel بارگذاری نشد — اتصال اینترنت را بررسی کنید.':'Excel library failed to load — check your internet connection.');
+    return;
+  }
+  const cols=['z','sym','en','fa','mass','cat','ec','eneg','mp','bp','dens','state','year','disc','formula','radius','ie1','ea','abund','crystal'];
+  const rows = DATA.map(d=>{
+    const o={};
+    cols.forEach(c=>{ o[c] = d[c]===null||d[c]===undefined ? '' : d[c]; });
+    return o;
+  });
+  const ws = XLSX.utils.json_to_sheet(rows);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Elements');
+  XLSX.writeFile(wb, 'periodic-table.xlsx');
+});
+document.getElementById('contrastBtn').addEventListener('click',()=>{
+  document.documentElement.classList.toggle('contrast');
+});
+document.getElementById('studyBtn').addEventListener('click',()=>{
+  document.documentElement.classList.toggle('study');
+});
+
+/* ---------- modal ---------- */
+const overlay=document.getElementById('overlay');
+const modalBox=document.getElementById('modalBox');
+
+function bar(labelFa,labelEn,val,unit,max){
+  const pct = (val===null||val===undefined||!max) ? 0 : Math.min(100, Math.round((val/max)*100));
+  return `<div class="chart-item">
+    <div class="chart-label"><span>${lang==='fa'?labelFa:labelEn}</span><span class="val mono">${fmt(val,unit)}</span></div>
+    <div class="bar-bg"><div class="bar-fill" style="width:${pct}%"></div></div>
+  </div>`;
+}
+
+/* ---- electron shells (Bohr model), derived from the stored subshell config ---- */
+const CORE_SUBSHELLS = {
+  He:[[1,'s',2]],
+  Ne:[[1,'s',2],[2,'s',2],[2,'p',6]],
+  Ar:[[1,'s',2],[2,'s',2],[2,'p',6],[3,'s',2],[3,'p',6]],
+  Kr:[[1,'s',2],[2,'s',2],[2,'p',6],[3,'s',2],[3,'p',6],[3,'d',10],[4,'s',2],[4,'p',6]],
+  Xe:[[1,'s',2],[2,'s',2],[2,'p',6],[3,'s',2],[3,'p',6],[3,'d',10],[4,'s',2],[4,'p',6],[4,'d',10],[5,'s',2],[5,'p',6]],
+  Rn:[[1,'s',2],[2,'s',2],[2,'p',6],[3,'s',2],[3,'p',6],[3,'d',10],[4,'s',2],[4,'p',6],[4,'d',10],[5,'s',2],[5,'p',6],[4,'f',14],[5,'d',10],[6,'s',2],[6,'p',6]]
+};
+function shellCounts(ec){
+  let list=[];
+  let rest=ec;
+  const m = ec.match(/^\[([A-Za-z]+)\]\s*(.*)$/);
+  if(m){ list = list.concat(CORE_SUBSHELLS[m[1]]||[]); rest = m[2]; }
+  const tokenRe=/(\d+)([spdf])(\d+)/g;
+  let tm;
+  while((tm=tokenRe.exec(rest))){ list.push([parseInt(tm[1]), tm[2], parseInt(tm[3])]); }
+  const shells={};
+  list.forEach(([n,l,c])=>{ shells[n]=(shells[n]||0)+c; });
+  const keys = Object.keys(shells).map(Number);
+  if(!keys.length) return [];
+  const maxN = Math.max(...keys);
+  const arr=[];
+  for(let n=1;n<=maxN;n++) arr.push(shells[n]||0);
+  return arr;
+}
+const SHELL_LETTERS=['K','L','M','N','O','P','Q'];
+function bohrSVG(el){
+  const shells = shellCounts(el.ec);
+  const size=200, cx=size/2, cy=size/2, maxR=88, minR=20;
+  const n = shells.length || 1;
+  let svg = `<svg viewBox="0 0 ${size} ${size}" width="200" height="200" style="display:block;margin:0 auto;">`;
+  svg += `<circle cx="${cx}" cy="${cy}" r="15" fill="var(--cc,var(--brass))"/>`;
+  svg += `<text x="${cx}" y="${cy+4}" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="11" font-weight="700" fill="#0a0e17">${el.sym}</text>`;
+  shells.forEach((count,i)=>{
+    const r = n<=1 ? maxR*0.55 : minR + i*((maxR-minR)/(n-1));
+    svg += `<circle cx="${cx}" cy="${cy}" r="${r.toFixed(1)}" fill="none" stroke="var(--muted)" stroke-width="1" stroke-dasharray="2,3" opacity="0.55"/>`;
+    for(let e=0;e<count;e++){
+      const angle = (2*Math.PI/count)*e - Math.PI/2;
+      const ex = (cx + r*Math.cos(angle)).toFixed(1);
+      const ey = (cy + r*Math.sin(angle)).toFixed(1);
+      svg += `<circle cx="${ex}" cy="${ey}" r="3.4" fill="var(--cc,var(--brass))"><title>e-</title></circle>`;
+    }
+  });
+  svg += `</svg>`;
+  return svg;
+}
+function shellSummary(el){
+  const shells = shellCounts(el.ec);
+  return shells.map((c,i)=>`${SHELL_LETTERS[i]||('n'+(i+1))}: ${c}`).join('  ·  ');
+}
+
+function openModal(el){
+  viewedSet.add(el.z);
+  viewedHistory = [el.z, ...viewedHistory.filter(z=>z!==el.z)].slice(0,12);
+  const c=CATS[el.cat];
+  const maxMass=Math.max(...DATA.map(d=>d.mass));
+  const maxMp=Math.max(...DATA.filter(d=>d.mp).map(d=>d.mp));
+  const maxBp=Math.max(...DATA.filter(d=>d.bp).map(d=>d.bp));
+  const maxDens=Math.max(...DATA.filter(d=>d.dens).map(d=>d.dens));
+
+  modalBox.style.setProperty('--cc', c.color);
+  modalBox.innerHTML = `
+    <div class="modal-head">
+      <div class="cat-bar"></div>
+      <button class="close-btn" id="closeBtn">✕</button>
+      <div class="modal-head-top">
+        <div class="modal-symbol">${el.sym}</div>
+        <div class="modal-titles">
+          <h2>${lang==='fa'?el.fa:el.en}</h2>
+          <div class="en">${lang==='fa'?el.en:el.fa} · Z=${el.z}</div>
+          <span class="catname">${lang==='fa'?c.fa:c.en}</span>
+        </div>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:14px;">
+        <button class="btn" id="favToggleBtn" style="font-size:11px;padding:5px 10px;">${favorites.has(el.z)?'★':'☆'} ${lang==='fa'?'علاقه‌مندی':'Favorite'}</button>
+        <button class="btn" id="shareBtn" style="font-size:11px;padding:5px 10px;">🔗 ${lang==='fa'?'اشتراک':'Share'}</button>
+        <button class="btn" id="copyInfoBtn" style="font-size:11px;padding:5px 10px;">📋 ${lang==='fa'?'کپی اطلاعات':'Copy info'}</button>
+        <button class="btn" id="addCompareBtn" style="font-size:11px;padding:5px 10px;">➕ ${lang==='fa'?'افزودن به مقایسه':'Add to compare'}</button>
+      </div>
+    </div>
+    <div class="modal-body">
+      <div class="section-title">${lang==='fa'?'اطلاعات پایه':'Basic info'}</div>
+      <div class="info-grid">
+        <div class="info-item"><span class="k">${lang==='fa'?'عدد اتمی':'Atomic number'}</span><span class="v">${el.z}</span></div>
+        <div class="info-item"><span class="k">${lang==='fa'?'جرم اتمی':'Atomic mass'}</span><span class="v">${el.mass}</span></div>
+        <div class="info-item"><span class="k">${lang==='fa'?'دوره':'Period'}</span><span class="v">${periodOf(el)}</span></div>
+        <div class="info-item"><span class="k">${lang==='fa'?'گروه':'Group'}</span><span class="v">${groupLabel(el)}</span></div>
+        <div class="info-item"><span class="k">${lang==='fa'?'بلوک':'Block'}</span><span class="v">${blockOf(el)}</span></div>
+        <div class="info-item"><span class="k">${lang==='fa'?'آرایش الکترونی':'Electron config'}</span><span class="v">${el.ec}</span></div>
+        <div class="info-item"><span class="k">${lang==='fa'?'الکترونگاتیوی':'Electronegativity'}</span><span class="v">${fmt(el.eneg)}</span></div>
+        <div class="info-item"><span class="k">${lang==='fa'?'حالت ماده':'State'}</span><span class="v">${lang==='fa'?STATE_FA[el.state]:STATE_EN[el.state]}</span></div>
+      </div>
+
+      <div class="section-title">${lang==='fa'?'شکل اتم و آرایش الکترونی':'Atomic shape & electron shells'}</div>
+      <div style="background:var(--surface2);border:1px solid var(--line);border-radius:10px;padding:16px;text-align:center;">
+        ${bohrSVG(el)}
+        <div class="mono" style="margin-top:8px;font-size:12px;color:var(--muted);direction:ltr;">${shellSummary(el)}</div>
+      </div>
+
+      <div class="section-title">${lang==='fa'?'خواص فیزیکی':'Physical properties'}</div>
+      <div class="info-grid">
+        <div class="info-item"><span class="k">${lang==='fa'?'نقطه ذوب':'Melting point'}</span><span class="v">${fmt(el.mp,' K')}${el.mp?' / '+kToC(el.mp)+'°C':''}</span></div>
+        <div class="info-item"><span class="k">${lang==='fa'?'نقطه جوش':'Boiling point'}</span><span class="v">${fmt(el.bp,' K')}${el.bp?' / '+kToC(el.bp)+'°C':''}</span></div>
+        <div class="info-item"><span class="k">${lang==='fa'?'چگالی':'Density'}</span><span class="v">${fmt(el.dens,' g/cm³')}</span></div>
+      </div>
+
+      <div class="section-title">${lang==='fa'?'فرمول شیمیایی و حالت‌های اکسایش':'Chemical formula & oxidation states'}</div>
+      <div class="info-grid">
+        <div class="info-item"><span class="k">${lang==='fa'?'فرمول در حالت طبیعی':'Natural form formula'}</span><span class="v">${el.formula}</span></div>
+      </div>
+      <div style="margin-top:10px;display:flex;flex-wrap:wrap;gap:8px;align-items:center;">
+        ${el.ox.length ? el.ox.slice().sort((a,b)=>b-a).map(n=>`<span class="ox-badge ${n>0?'pos':'neg'}">${n>0?'+'+n:n}</span>`).join('') : `<span style="color:var(--muted);font-size:13px;">${lang==='fa'?'حالت اکسایش رایج و پایداری ندارد (خنثی)':'No common oxidation states (inert)'}</span>`}
+      </div>
+
+      <div class="section-title">${lang==='fa'?'خواص اتمی و فراوانی':'Atomic properties & abundance'}</div>
+      <div class="info-grid">
+        <div class="info-item"><span class="k">${lang==='fa'?'شعاع اتمی':'Atomic radius'}</span><span class="v">${fmt(el.radius,' pm')}</span></div>
+        <div class="info-item"><span class="k">${lang==='fa'?'انرژی یونش اول':'1st ionization energy'}</span><span class="v">${fmt(el.ie1,' kJ/mol')}</span></div>
+        <div class="info-item"><span class="k">${lang==='fa'?'میل الکترونی':'Electron affinity'}</span><span class="v">${fmt(el.ea,' kJ/mol')}</span></div>
+        <div class="info-item"><span class="k">${lang==='fa'?'فراوانی در پوسته زمین':'Crustal abundance'}</span><span class="v">${fmtAbund(el.abund)}</span></div>
+        <div class="info-item"><span class="k">${lang==='fa'?'ساختار بلوری':'Crystal structure'}</span><span class="v">${el.crystal ? (lang==='fa'?CRYSTAL_LABELS[el.crystal].fa:CRYSTAL_LABELS[el.crystal].en) : (lang==='fa'?'نامشخص':'unknown')}</span></div>
+      </div>
+
+      <div class="section-title">${lang==='fa'?'تاریخچه کشف':'Discovery'}</div>
+      <div class="info-grid">
+        <div class="info-item"><span class="k">${lang==='fa'?'سال کشف':'Year'}</span><span class="v">${el.year}</span></div>
+        <div class="info-item"><span class="k">${lang==='fa'?'کاشف':'Discoverer'}</span><span class="v">${el.disc}</span></div>
+      </div>
+
+      <div class="section-title">${lang==='fa'?'داستان و کاربرد':'Story & uses'}</div>
+      <div class="story">${el.note}</div>
+
+      <div class="section-title">${lang==='fa'?'عناصر مشابه (هم‌دسته)':'Similar elements (same category)'}</div>
+      <div style="display:flex;flex-wrap:wrap;gap:8px;">
+        ${DATA.filter(d=>d.cat===el.cat && d.z!==el.z).slice(0,6).map(d=>`<span class="similar-chip" data-z="${d.z}"><span class="sc-sym mono">${d.sym}</span><span>${lang==='fa'?d.fa:d.en}</span></span>`).join('')}
+      </div>
+
+      <div class="section-title">${lang==='fa'?'نمودار مقایسه‌ای (نسبت به کل عناصر)':'Comparison chart (vs. all elements)'}</div>
+      ${bar('جرم اتمی','Atomic mass', el.mass,'', maxMass)}
+      ${bar('نقطه ذوب','Melting pt', el.mp,' K', maxMp)}
+      ${bar('نقطه جوش','Boiling pt', el.bp,' K', maxBp)}
+      ${bar('چگالی','Density', el.dens,' g/cm³', maxDens)}
+    </div>
+  `;
+  overlay.classList.add('show');
+  document.getElementById('closeBtn').addEventListener('click',closeModal);
+  modalBox.querySelectorAll('.similar-chip').forEach(chip=>{
+    chip.addEventListener('click',()=>{
+      const target = DATA.find(d=>d.z==chip.dataset.z);
+      if(target) openModal(target);
+    });
+  });
+  document.getElementById('shareBtn').addEventListener('click',(e)=>{
+    const link = location.origin + location.pathname + '#' + el.sym;
+    history.replaceState(null,'','#'+el.sym);
+    copyText(link);
+    flashBtnFeedback(e.currentTarget, lang==='fa'?'✓ لینک کپی شد':'✓ Link copied');
+  });
+  document.getElementById('copyInfoBtn').addEventListener('click',(e)=>{
+    const lines = [
+      `${lang==='fa'?el.fa:el.en} (${el.sym}) — Z=${el.z}`,
+      `${lang==='fa'?'جرم اتمی':'Mass'}: ${el.mass}`,
+      `${lang==='fa'?'دسته':'Category'}: ${lang==='fa'?CATS[el.cat].fa:CATS[el.cat].en}`,
+      `${lang==='fa'?'آرایش الکترونی':'Electron config'}: ${el.ec}`,
+      `${lang==='fa'?'نقطه ذوب':'Melting point'}: ${fmt(el.mp,' K')}`,
+      `${lang==='fa'?'نقطه جوش':'Boiling point'}: ${fmt(el.bp,' K')}`,
+      `${lang==='fa'?'چگالی':'Density'}: ${fmt(el.dens,' g/cm³')}`,
+      `${lang==='fa'?'فرمول طبیعی':'Natural formula'}: ${el.formula}`,
+      `${lang==='fa'?'کاشف':'Discoverer'}: ${el.disc} (${el.year})`,
+      el.note
+    ];
+    copyText(lines.join('\n'));
+    flashBtnFeedback(e.currentTarget, lang==='fa'?'✓ کپی شد':'✓ Copied');
+  });
+  document.getElementById('addCompareBtn').addEventListener('click',(e)=>{
+    addToCompare(el.z);
+    flashBtnFeedback(e.currentTarget, lang==='fa'?'✓ افزوده شد':'✓ Added');
+  });
+  document.getElementById('favToggleBtn').addEventListener('click',(e)=>{
+    if(favorites.has(el.z)) favorites.delete(el.z); else favorites.add(el.z);
+    e.currentTarget.textContent = `${favorites.has(el.z)?'★':'☆'} ${lang==='fa'?'علاقه‌مندی':'Favorite'}`;
+    document.getElementById('favCount').textContent = favorites.size;
+    const cell = grid.querySelector(`.cell[data-z="${el.z}"]`);
+    if(cell) cell.classList.toggle('is-fav', favorites.has(el.z));
+  });
+}
+function flashBtnFeedback(btn, msg){
+  const original = btn.textContent;
+  btn.textContent = msg;
+  setTimeout(()=>{ btn.textContent = original; }, 1400);
+}
+function copyText(text){
+  if(navigator.clipboard && window.isSecureContext){
+    navigator.clipboard.writeText(text).catch(()=>fallbackCopy(text));
+  } else {
+    fallbackCopy(text);
+  }
+}
+function fallbackCopy(text){
+  const ta=document.createElement('textarea');
+  ta.value=text; ta.style.position='fixed'; ta.style.opacity='0';
+  document.body.appendChild(ta); ta.focus(); ta.select();
+  try{ document.execCommand('copy'); }catch(e){}
+  document.body.removeChild(ta);
+}
+function closeModal(){ overlay.classList.remove('show'); }
+overlay.addEventListener('click',e=>{ if(e.target===overlay) closeModal(); });
+document.addEventListener('keydown',e=>{ if(e.key==='Escape') closeModal(); });
+
+/* ---------- theme ---------- */
+const themeBtn=document.getElementById('themeBtn');
+themeBtn.addEventListener('click',()=>{
+  document.documentElement.classList.toggle('light');
+  const isLight = document.documentElement.classList.contains('light');
+  themeBtn.textContent = isLight ? (lang==='fa'?'🌙 تاریک':'🌙 Dark') : (lang==='fa'?'☀️ روشن':'☀️ Light');
+});
+
+/* ---------- language ---------- */
+const langBtn=document.getElementById('langBtn');
+const texts = {
+  fa:{title:'جدول تناوبی عناصر', sub:'جدول تناوبی · ۱۱۸ عنصر', legend:'روی هر عنصر کلیک کنید تا اطلاعات کامل آن شامل خواص فیزیکی، شیمیایی، تاریخچه کشف، کاربردها و نمودار مقایسه‌ای باز شود.', footer:'داده‌ها جنبه آموزشی دارند · سازنده: Mr.black', zoom:'اندازه', search:'جستجو: نام، نماد یا عدد اتمی…', theme:'☀️ روشن'},
+  en:{title:'Periodic Table of Elements', sub:'PERIODIC TABLE · 118 ELEMENTS', legend:'Click any element to see full physical & chemical properties, discovery history, uses, and comparison charts.', footer:'Data is for educational reference · Made by Mr.black', zoom:'Zoom', search:'Search: name, symbol or atomic number…', theme:'☀️ Light'}
+};
+langBtn.addEventListener('click',()=>{
+  lang = lang==='fa' ? 'en' : 'fa';
+  document.documentElement.lang = lang;
+  document.documentElement.dir = lang==='fa' ? 'rtl' : 'ltr';
+  document.documentElement.dataset.lang = lang;
+  langBtn.textContent = lang==='fa' ? 'EN' : 'فا';
+  document.getElementById('mainTitle').textContent = texts[lang].title;
+  document.getElementById('subTitle').textContent = texts[lang].sub;
+  document.getElementById('legendNote').textContent = texts[lang].legend;
+  document.getElementById('footerNote').textContent = texts[lang].footer;
+  document.getElementById('zoomLabel').textContent = texts[lang].zoom;
+  document.getElementById('searchInput').placeholder = texts[lang].search;
+  document.getElementById('rangeLabel').textContent = lang==='fa'?'بازه عدد اتمی':'Atomic # range';
+  document.getElementById('randomLbl').textContent = lang==='fa'?'تصادفی':'Random';
+  const isLight = document.documentElement.classList.contains('light');
+  themeBtn.textContent = isLight ? (lang==='fa'?'🌙 تاریک':'🌙 Dark') : (lang==='fa'?'☀️ روشن':'☀️ Light');
+  buildGrid();
+  buildFilterChips();
+  buildStateChips();
+  buildBlockChips();
+  buildTimeline();
+  initDayWidget();
+});
+
+/* ---------- heatmap ---------- */
+let heatMode='off';
+function heatColor(t){
+  const c1=[59,130,246], c2=[234,179,8], c3=[239,68,68];
+  let a,b,f;
+  if(t<0.5){a=c1;b=c2;f=t/0.5;} else {a=c2;b=c3;f=(t-0.5)/0.5;}
+  const r=Math.round(a[0]+(b[0]-a[0])*f), g=Math.round(a[1]+(b[1]-a[1])*f), bl=Math.round(a[2]+(b[2]-a[2])*f);
+  return `rgb(${r},${g},${bl})`;
+}
+function yearNumeric(el){
+  if(typeof el.year==='number') return el.year;
+  const y = parseInt(el.year);
+  return isNaN(y) ? -3000 : y;
+}
+function applyHeatmap(){
+  const legend = document.getElementById('heatLegend');
+  legend.style.display = heatMode==='off' ? 'none':'flex';
+  const cells = grid.querySelectorAll('.cell');
+  if(heatMode==='off'){ cells.forEach(c=>{ c.style.background=''; }); return; }
+  const getVal = el => heatMode==='year' ? yearNumeric(el) : el[heatMode];
+  const vals = DATA.map(getVal).filter(v=>v!==null && v!==undefined && !isNaN(v));
+  const min=Math.min(...vals), max=Math.max(...vals);
+  cells.forEach(c=>{
+    const el = DATA.find(d=>d.z==c.dataset.z);
+    const v = getVal(el);
+    if(v===null||v===undefined||isNaN(v)){ c.style.background='var(--surface3)'; return; }
+    const t = max>min ? (v-min)/(max-min) : 0.5;
+    c.style.background = heatColor(t);
+  });
+}
+document.getElementById('heatSelect').addEventListener('change', e=>{ heatMode=e.target.value; applyHeatmap(); });
+
+/* ---------- discovery timeline ---------- */
+function buildTimeline(){
+  const track = document.getElementById('timelineTrack');
+  track.innerHTML='';
+  const minYear=-3000, maxYear=2026, widthPx=2600;
+  track.style.width = widthPx+'px';
+  const axis=document.createElement('div'); axis.className='tl-axis'; track.appendChild(axis);
+  for(let y=minYear; y<=maxYear; y+=500){
+    const pct=(y-minYear)/(maxYear-minYear);
+    const tick=document.createElement('div');
+    tick.className='tl-tick';
+    tick.style.left=(pct*widthPx)+'px';
+    tick.textContent = y<0 ? Math.abs(y)+(lang==='fa'?' ق.م':' BC') : y;
+    track.appendChild(tick);
+  }
+  DATA.forEach(el=>{
+    const y=yearNumeric(el);
+    const pct=(y-minYear)/(maxYear-minYear);
+    const dot=document.createElement('div');
+    dot.className='tl-dot';
+    dot.style.left=(pct*widthPx)+'px';
+    dot.style.background=CATS[el.cat].color;
+    dot.title=`${el.z} · ${lang==='fa'?el.fa:el.en} · ${el.year}`;
+    dot.addEventListener('click',()=>openModal(el));
+    track.appendChild(dot);
+  });
+}
+
+/* ---------- compare panel ---------- */
+let compareList=[];
+function renderCompare(){
+  const box=document.getElementById('compareGrid');
+  if(!compareList.length){
+    box.innerHTML = `<span style="color:var(--muted);">${lang==='fa'?'عنصری انتخاب نشده — از باکس جستجو یا دکمه «افزودن به مقایسه» در مودال هر عنصر استفاده کنید.':'No elements selected yet — use the search box above or the "Add to compare" button in any element modal.'}</span>`;
+    return;
+  }
+  box.innerHTML = compareList.map(z=>{
+    const el=DATA.find(d=>d.z===z);
+    return `<div class="compare-col">
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <span class="cc-sym mono" style="color:${CATS[el.cat].color}">${el.sym}</span>
+        <span style="cursor:pointer;color:var(--muted);" data-remove="${z}">✕</span>
+      </div>
+      <div>${lang==='fa'?el.fa:el.en}</div>
+      <div class="mono" style="margin:4px 0 8px;color:var(--muted);">Z=${el.z}</div>
+      <div>${lang==='fa'?'جرم':'Mass'}: <b class="mono">${el.mass}</b></div>
+      <div>${lang==='fa'?'ذوب':'Melt'}: <b class="mono">${fmt(el.mp,'K')}</b></div>
+      <div>${lang==='fa'?'جوش':'Boil'}: <b class="mono">${fmt(el.bp,'K')}</b></div>
+      <div>${lang==='fa'?'چگالی':'Density'}: <b class="mono">${fmt(el.dens)}</b></div>
+      <div>${lang==='fa'?'الکترونگاتیوی':'Eneg'}: <b class="mono">${fmt(el.eneg)}</b></div>
+    </div>`;
+  }).join('');
+  box.querySelectorAll('[data-remove]').forEach(btn=>{
+    btn.addEventListener('click',()=>{ compareList=compareList.filter(z=>z!=btn.dataset.remove); renderCompare(); });
+  });
+}
+function addToCompare(z){
+  if(compareList.includes(z)) return;
+  if(compareList.length>=4){ alert(lang==='fa'?'حداکثر ۴ عنصر قابل مقایسه است':'You can compare up to 4 elements'); return; }
+  compareList.push(z);
+  renderCompare();
+}
+document.getElementById('compareBtn').addEventListener('click',()=>{ document.getElementById('compareOverlay').classList.add('show'); renderCompare(); });
+document.getElementById('compareCloseBtn').addEventListener('click',()=>{ document.getElementById('compareOverlay').classList.remove('show'); });
+document.getElementById('compareOverlay').addEventListener('click',e=>{ if(e.target.id==='compareOverlay') document.getElementById('compareOverlay').classList.remove('show'); });
+document.getElementById('compareSearch').addEventListener('input', e=>{
+  const raw=e.target.value.trim(), q=raw.toLowerCase();
+  const box=document.getElementById('compareSuggest');
+  if(!q){ box.innerHTML=''; return; }
+  const matches=DATA.filter(d=>d.fa.includes(raw)||d.en.toLowerCase().includes(q)||d.sym.toLowerCase()===q).slice(0,6);
+  box.innerHTML = matches.map(d=>`<span class="similar-chip" data-z="${d.z}"><span class="sc-sym mono">${d.sym}</span><span>${lang==='fa'?d.fa:d.en}</span></span>`).join('');
+  box.querySelectorAll('.similar-chip').forEach(chip=>{
+    chip.addEventListener('click',()=>{ addToCompare(Number(chip.dataset.z)); e.target.value=''; box.innerHTML=''; });
+  });
+});
+
+/* ---------- guess-the-element game ---------- */
+let gameState={score:0, round:0, target:null};
+function newGameRound(){
+  gameState.target = DATA[Math.floor(Math.random()*DATA.length)];
+  gameState.round++;
+  document.getElementById('gameRound').textContent = gameState.round;
+  const diff = document.getElementById('gameDifficulty').value;
+  const t = gameState.target;
+  const clueBox = document.getElementById('gameClue');
+  if(diff==='easy'){
+    clueBox.innerHTML = `${lang==='fa'?'گروه':'Group'}: <b>${groupLabel(t)}</b> &nbsp;·&nbsp; ${lang==='fa'?'دوره':'Period'}: <b>${periodOf(t)}</b> &nbsp;·&nbsp; ${lang==='fa'?'دسته':'Category'}: <b>${lang==='fa'?CATS[t.cat].fa:CATS[t.cat].en}</b>`;
+  } else if(diff==='medium'){
+    clueBox.innerHTML = `${lang==='fa'?'الکترونگاتیوی':'Electronegativity'}: <b>${fmt(t.eneg)}</b> &nbsp;·&nbsp; ${lang==='fa'?'چگالی':'Density'}: <b>${fmt(t.dens)}</b> &nbsp;·&nbsp; ${lang==='fa'?'حالت ماده':'State'}: <b>${lang==='fa'?STATE_FA[t.state]:STATE_EN[t.state]}</b>`;
+  } else {
+    clueBox.innerHTML = `${lang==='fa'?'عدد اتمی':'Atomic #'}: <b>${t.z}</b> &nbsp;·&nbsp; ${lang==='fa'?'جرم اتمی':'Mass'}: <b>${t.mass}</b>`;
+  }
+  const pool = DATA.filter(d=>d.z!==t.z);
+  const distractors=[];
+  while(distractors.length<3){
+    const cand = pool[Math.floor(Math.random()*pool.length)];
+    if(!distractors.includes(cand)) distractors.push(cand);
+  }
+  const options = [t, ...distractors].sort(()=>Math.random()-0.5);
+  const choicesBox = document.getElementById('gameChoices');
+  choicesBox.innerHTML='';
+  options.forEach(opt=>{
+    const btn=document.createElement('button');
+    btn.className='game-choice';
+    btn.textContent = lang==='fa'?opt.fa:opt.en;
+    btn.addEventListener('click',()=>{
+      choicesBox.querySelectorAll('.game-choice').forEach(b=>b.disabled=true);
+      if(opt.z===t.z){ btn.classList.add('correct'); gameState.score++; }
+      else{
+        btn.classList.add('wrong');
+        choicesBox.querySelectorAll('.game-choice').forEach(b=>{ if(b.textContent===(lang==='fa'?t.fa:t.en)) b.classList.add('correct'); });
+      }
+      document.getElementById('gameScore').textContent = gameState.score;
+    });
+    choicesBox.appendChild(btn);
+  });
+}
+document.getElementById('gameBtn').addEventListener('click',()=>{ document.getElementById('gameOverlay').classList.add('show'); newGameRound(); });
+document.getElementById('gameCloseBtn').addEventListener('click',()=>{ document.getElementById('gameOverlay').classList.remove('show'); });
+document.getElementById('gameOverlay').addEventListener('click',e=>{ if(e.target.id==='gameOverlay') document.getElementById('gameOverlay').classList.remove('show'); });
+document.getElementById('gameNextBtn').addEventListener('click', newGameRound);
+document.getElementById('gameDifficulty').addEventListener('change', newGameRound);
+
+/* ---------- print ---------- */
+document.getElementById('printBtn').addEventListener('click',()=>window.print());
+
+/* ---------- periodic trends explainer (static, well-established chemistry — no per-element guessing) ---------- */
+const TRENDS_TEXT = {
+  fa: [
+    ['شعاع اتمی', 'در یک دوره (از چپ به راست) به دلیل افزایش بار مؤثر هسته، شعاع اتمی کاهش می‌یابد. در یک گروه (از بالا به پایین) با افزوده‌شدن لایه‌های الکترونی جدید، شعاع اتمی افزایش می‌یابد.'],
+    ['انرژی یونش', 'روندی تقریباً معکوس شعاع اتمی دارد: در یک دوره افزایش می‌یابد (الکترون‌ها محکم‌تر نگه داشته می‌شوند) و در یک گروه کاهش می‌یابد (الکترون بیرونی از هسته دورتر و کم‌پیوندتر است).'],
+    ['الکترونگاتیوی', 'مانند انرژی یونش، در یک دوره افزایش و در یک گروه کاهش می‌یابد. هالوژن‌ها (به‌ویژه فلوئور) بالاترین و فلزات قلیایی پایین‌ترین الکترونگاتیوی را دارند.'],
+    ['خاصیت فلزی', 'از راست به چپ در یک دوره و از بالا به پایین در یک گروه افزایش می‌یابد — به همین دلیل فلزات عمدتاً سمت چپ و پایین جدول قرار دارند.']
+  ],
+  en: [
+    ['Atomic radius', 'Decreases across a period (left to right) as increasing nuclear charge pulls electrons in tighter. Increases down a group as new electron shells are added.'],
+    ['Ionization energy', 'Roughly the inverse of atomic radius: increases across a period (electrons held more tightly) and decreases down a group (outer electron is farther from the nucleus).'],
+    ['Electronegativity', 'Like ionization energy, increases across a period and decreases down a group. Halogens (especially fluorine) have the highest values; alkali metals the lowest.'],
+    ['Metallic character', 'Increases right-to-left across a period and top-to-bottom down a group — which is why metals cluster on the lower-left of the table.']
+  ]
+};
+function renderTrends(){
+  document.getElementById('trendsTitle').textContent = lang==='fa'?'📘 روندهای تناوبی':'📘 Periodic trends';
+  document.getElementById('trendsBody').innerHTML = TRENDS_TEXT[lang].map(([title,body])=>
+    `<div style="margin-bottom:16px;"><b style="color:var(--brass);">${title}</b><br>${body}</div>`
+  ).join('');
+}
+document.getElementById('trendsBtn').addEventListener('click',()=>{ renderTrends(); document.getElementById('trendsOverlay').classList.add('show'); });
+document.getElementById('trendsCloseBtn').addEventListener('click',()=>{ document.getElementById('trendsOverlay').classList.remove('show'); });
+document.getElementById('trendsOverlay').addEventListener('click',e=>{ if(e.target.id==='trendsOverlay') document.getElementById('trendsOverlay').classList.remove('show'); });
+
+document.getElementById('mendeleevBtn').addEventListener('click',()=>{ document.getElementById('mendeleevOverlay').classList.add('show'); });
+document.getElementById('mendeleevCloseBtn').addEventListener('click',()=>{ document.getElementById('mendeleevOverlay').classList.remove('show'); });
+document.getElementById('mendeleevOverlay').addEventListener('click',e=>{ if(e.target.id==='mendeleevOverlay') document.getElementById('mendeleevOverlay').classList.remove('show'); });
+
+function renderExtended(){
+  const box = document.getElementById('extendedGrid');
+  let html='';
+  for(let z=119; z<=168; z++){
+    const {name, sym} = systematicName(z);
+    let status = lang==='fa' ? 'کاملاً نظری' : 'purely theoretical';
+    let predicted = '';
+    if(z===119){ status = lang==='fa' ? 'هدف فعال سنتز' : 'active synthesis target'; predicted = lang==='fa' ? 'پیش‌بینی: فلز قلیایی، حالت اکسایش ۱+' : 'predicted: alkali metal, +1'; }
+    else if(z===120){ status = lang==='fa' ? 'هدف فعال سنتز' : 'active synthesis target'; predicted = lang==='fa' ? 'پیش‌بینی: قلیایی خاکی، حالت اکسایش ۲+' : 'predicted: alkaline earth, +2'; }
+    else if(z<=126) status = lang==='fa' ? 'نامزد جزیره پایداری' : 'island-of-stability candidate';
+    html += `<div style="background:var(--surface2);border:1px solid var(--line);border-radius:8px;padding:10px;text-align:center;">
+      <div class="mono" style="color:var(--muted);font-size:11px;">${z}</div>
+      <div class="mono" style="font-weight:700;font-size:16px;color:var(--brass);">${sym}</div>
+      <div style="font-size:11px;margin-top:2px;">${name}</div>
+      <div style="font-size:10px;color:var(--muted);margin-top:4px;">${status}</div>
+      ${predicted?`<div style="font-size:10px;color:#5ad478;margin-top:3px;">${predicted}</div>`:''}
+    </div>`;
+  }
+  box.innerHTML = html;
+}
+document.getElementById('extendedBtn').addEventListener('click',()=>{ renderExtended(); document.getElementById('extendedOverlay').classList.add('show'); });
+document.getElementById('extendedCloseBtn').addEventListener('click',()=>{ document.getElementById('extendedOverlay').classList.remove('show'); });
+document.getElementById('extendedOverlay').addEventListener('click',e=>{ if(e.target.id==='extendedOverlay') document.getElementById('extendedOverlay').classList.remove('show'); });
+
+/* ---------- flashcard study mode ---------- */
+let flashCurrent=null;
+function newFlashcard(){
+  flashCurrent = DATA[Math.floor(Math.random()*DATA.length)];
+  document.getElementById('flashSym').textContent = flashCurrent.sym;
+  document.getElementById('flashBack').style.display='none';
+  document.getElementById('flashBack').innerHTML='';
+  document.getElementById('flashHint').textContent = lang==='fa'?'برای دیدن پاسخ کلیک کنید':'Click to reveal';
+}
+document.getElementById('flashCard').addEventListener('click',()=>{
+  const back = document.getElementById('flashBack');
+  if(back.style.display==='none'){
+    back.innerHTML = `<b>${lang==='fa'?flashCurrent.fa:flashCurrent.en}</b><br>Z=${flashCurrent.z} · ${flashCurrent.mass}<br>${lang==='fa'?CATS[flashCurrent.cat].fa:CATS[flashCurrent.cat].en}`;
+    back.style.display='block';
+    document.getElementById('flashHint').textContent='';
+  }
+});
+document.getElementById('flashBtn').addEventListener('click',()=>{ document.getElementById('flashTitle').textContent = lang==='fa'?'🃏 فلش‌کارت':'🃏 Flashcards'; newFlashcard(); document.getElementById('flashOverlay').classList.add('show'); });
+document.getElementById('flashCloseBtn').addEventListener('click',()=>{ document.getElementById('flashOverlay').classList.remove('show'); });
+document.getElementById('flashOverlay').addEventListener('click',e=>{ if(e.target.id==='flashOverlay') document.getElementById('flashOverlay').classList.remove('show'); });
+document.getElementById('flashNextBtn').addEventListener('click', newFlashcard);
+
+/* ---------- favorites-only filter chip ---------- */
+document.getElementById('favOnlyChip').addEventListener('click',(e)=>{
+  favOnly = !favOnly;
+  e.currentTarget.classList.toggle('active', favOnly);
+  applyFilters();
+});
+
+/* ---------- my panel: favorites / history / progress ---------- */
+function chipFor(z){
+  const el = DATA.find(d=>d.z===z);
+  return `<span class="similar-chip" data-z="${el.z}"><span class="sc-sym mono">${el.sym}</span><span>${lang==='fa'?el.fa:el.en}</span></span>`;
+}
+function renderMyPanel(){
+  document.getElementById('progressText').textContent = lang==='fa'
+    ? `${viewedSet.size} از ${DATA.length} عنصر را دیده‌اید (${Math.round(viewedSet.size/DATA.length*100)}٪)`
+    : `Viewed ${viewedSet.size} of ${DATA.length} elements (${Math.round(viewedSet.size/DATA.length*100)}%)`;
+  document.getElementById('progressBar').style.width = (viewedSet.size/DATA.length*100)+'%';
+
+  const favBox = document.getElementById('favList');
+  favBox.innerHTML = favorites.size
+    ? [...favorites].map(chipFor).join('')
+    : `<span style="color:var(--muted);font-size:13px;">${lang==='fa'?'هنوز چیزی علاقه‌مندی نشده — از دکمه ☆ داخل مودال هر عنصر استفاده کنید.':'No favorites yet — use the ☆ button inside any element modal.'}</span>`;
+
+  const histBox = document.getElementById('historyList');
+  histBox.innerHTML = viewedHistory.length
+    ? viewedHistory.map(chipFor).join('')
+    : `<span style="color:var(--muted);font-size:13px;">${lang==='fa'?'هنوز عنصری بازدید نکرده‌اید.':'No elements viewed yet.'}</span>`;
+
+  document.querySelectorAll('#favList .similar-chip, #historyList .similar-chip').forEach(chip=>{
+    chip.addEventListener('click',()=>{
+      const target = DATA.find(d=>d.z==chip.dataset.z);
+      if(target) openModal(target);
+    });
+  });
+}
+document.getElementById('myPanelBtn').addEventListener('click',()=>{ renderMyPanel(); document.getElementById('myPanelOverlay').classList.add('show'); });
+document.getElementById('myPanelCloseBtn').addEventListener('click',()=>{ document.getElementById('myPanelOverlay').classList.remove('show'); });
+document.getElementById('myPanelOverlay').addEventListener('click',e=>{ if(e.target.id==='myPanelOverlay') document.getElementById('myPanelOverlay').classList.remove('show'); });
+
+/* ---------- unit converter + mole calculator ---------- */
+let tempUpdating=false;
+function syncTemp(source){
+  if(tempUpdating) return;
+  tempUpdating=true;
+  const kEl=document.getElementById('tempK'), cEl=document.getElementById('tempC'), fEl=document.getElementById('tempF');
+  let k;
+  if(source==='k' && kEl.value!==''){ k=parseFloat(kEl.value); }
+  else if(source==='c' && cEl.value!==''){ k=parseFloat(cEl.value)+273.15; }
+  else if(source==='f' && fEl.value!==''){ k=(parseFloat(fEl.value)-32)*5/9+273.15; }
+  else { tempUpdating=false; return; }
+  if(source!=='k') kEl.value = Math.round(k*100)/100;
+  if(source!=='c') cEl.value = Math.round((k-273.15)*100)/100;
+  if(source!=='f') fEl.value = Math.round(((k-273.15)*9/5+32)*100)/100;
+  tempUpdating=false;
+}
+document.getElementById('tempK').addEventListener('input',()=>syncTemp('k'));
+document.getElementById('tempC').addEventListener('input',()=>syncTemp('c'));
+document.getElementById('tempF').addEventListener('input',()=>syncTemp('f'));
+
+let molElement=null, molUpdating=false;
+document.getElementById('molElementSearch').addEventListener('input', e=>{
+  const raw=e.target.value.trim(), q=raw.toLowerCase();
+  const box=document.getElementById('molSuggest');
+  if(!q){ box.innerHTML=''; return; }
+  const matches=DATA.filter(d=>d.fa.includes(raw)||d.en.toLowerCase().includes(q)||d.sym.toLowerCase()===q).slice(0,6);
+  box.innerHTML = matches.map(d=>`<span class="similar-chip" data-z="${d.z}"><span class="sc-sym mono">${d.sym}</span><span>${lang==='fa'?d.fa:d.en}</span></span>`).join('');
+  box.querySelectorAll('.similar-chip').forEach(chip=>{
+    chip.addEventListener('click',()=>{
+      molElement = DATA.find(d=>d.z==chip.dataset.z);
+      document.getElementById('molSelected').textContent = (lang==='fa'?'عنصر انتخاب‌شده: ':'Selected: ')+`${lang==='fa'?molElement.fa:molElement.en} (${molElement.sym}) — ${lang==='fa'?'جرم مولی':'molar mass'}: ${molElement.mass} g/mol`;
+      e.target.value=''; box.innerHTML='';
+      document.getElementById('molGrams').value=''; document.getElementById('molMoles').value='';
+    });
+  });
+});
+function syncMol(source){
+  if(molUpdating || !molElement) return;
+  molUpdating=true;
+  const gEl=document.getElementById('molGrams'), mEl=document.getElementById('molMoles');
+  if(source==='g' && gEl.value!==''){ mEl.value = Math.round((parseFloat(gEl.value)/molElement.mass)*10000)/10000; }
+  else if(source==='m' && mEl.value!==''){ gEl.value = Math.round((parseFloat(mEl.value)*molElement.mass)*10000)/10000; }
+  molUpdating=false;
+}
+document.getElementById('molGrams').addEventListener('input',()=>syncMol('g'));
+document.getElementById('molMoles').addEventListener('input',()=>syncMol('m'));
+
+document.getElementById('calcBtn').addEventListener('click',()=>{ document.getElementById('calcOverlay').classList.add('show'); });
+document.getElementById('calcCloseBtn').addEventListener('click',()=>{ document.getElementById('calcOverlay').classList.remove('show'); });
+document.getElementById('calcOverlay').addEventListener('click',e=>{ if(e.target.id==='calcOverlay') document.getElementById('calcOverlay').classList.remove('show'); });
+
+/* ---------- element of the day ---------- */
+function initDayWidget(){
+  const start = new Date(new Date().getFullYear(),0,0);
+  const dayIdx = Math.floor((new Date()-start)/86400000) % DATA.length;
+  const el = DATA[dayIdx];
+  document.getElementById('dwSym').textContent = el.sym;
+  document.getElementById('dwLabel').textContent = (lang==='fa'?'عنصر امروز: ':'Today: ')+(lang==='fa'?el.fa:el.en);
+  document.getElementById('dayWidget').onclick = ()=>openModal(el);
+}
+
+/* ---------- keyboard navigation ---------- */
+let posMap={}, kbdPos={r:1,c:1};
+function buildPositionMap(){
+  posMap={};
+  grid.querySelectorAll('.cell').forEach(c=>{
+    posMap[parseInt(c.style.gridRow)+','+parseInt(c.style.gridColumn)] = c;
+  });
+}
+function focusCell(r,c){
+  document.querySelectorAll('.cell.kbd-focus').forEach(e=>e.classList.remove('kbd-focus'));
+  const cell = posMap[r+','+c];
+  if(cell){ cell.classList.add('kbd-focus'); cell.scrollIntoView({block:'nearest', inline:'nearest'}); kbdPos={r,c}; }
+}
+document.addEventListener('keydown', e=>{
+  if(overlay.classList.contains('show') || document.getElementById('compareOverlay').classList.contains('show') || document.getElementById('gameOverlay').classList.contains('show')) return;
+  if(!['ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Enter'].includes(e.key)) return;
+  if(document.activeElement && ['INPUT','SELECT','TEXTAREA'].includes(document.activeElement.tagName)) return;
+  e.preventDefault();
+  const {r,c}=kbdPos;
+  if(e.key==='Enter'){ const cell=posMap[r+','+c]; if(cell) cell.click(); return; }
+  const dir={ArrowUp:[-1,0],ArrowDown:[1,0],ArrowLeft:[0,-1],ArrowRight:[0,1]}[e.key];
+  let nr=r, nc=c;
+  for(let step=0; step<20; step++){
+    nr+=dir[0]; nc+=dir[1];
+    if(nr<1||nr>10||nc<1||nc>18) break;
+    if(posMap[nr+','+nc]){ focusCell(nr,nc); break; }
+  }
+});
+
+/* ---------- hash deep-link ---------- */
+function checkHashOpen(){
+  const h = decodeURIComponent(location.hash.replace('#',''));
+  if(!h) return;
+  const el = DATA.find(d=>d.sym.toLowerCase()===h.toLowerCase() || String(d.z)===h);
+  if(el) openModal(el);
+}
+
+buildTimeline();
+initDayWidget();
+checkHashOpen();
+
+buildFilterChips();
+buildStateChips();
+buildBlockChips();
+buildGrid();
+</script>
+</body>
+</html>
